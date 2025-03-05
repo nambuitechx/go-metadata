@@ -9,27 +9,29 @@ import (
 
 // Database service entity
 type DBServiceEntity struct {
-	ID					string				`db:"id" json:"id" binding:"required"`
-	Name				string				`db:"name" json:"name" binding:"required"`
-	ServiceType			string				`db:"servicetype" json:"serviceType" binding:"required"`
-	Json				*DBService			`db:"json" json:"json" binding:"required"`
-	UpdatedAt			int64				`db:"updatedat" json:"updatedAt" binding:"required"`
+	ID					string				`db:"id" json:"id"`
+	Name				string				`db:"name" json:"name"`
+	ServiceType			string				`db:"servicetype" json:"serviceType"`
+	Json				*DBService			`db:"json" json:"json"`
+	UpdatedAt			int64				`db:"updatedat" json:"updatedAt"`
 	UpdatedBy			string				`db:"updatedby" json:"updatedBy"`
-	Deleted				bool				`db:"deleted" json:"deleted" binding:"required"`
+	Deleted				bool				`db:"deleted" json:"deleted"`
 	NameHash			string				`db:"namehash" json:"nameHash"`
 }
 
 // Database service
 type DBService struct {
-	ID					string				`json:"id" binding:"required"`
-	Name				string				`json:"name" binding:"required"`
-	FullyQualifiedName	string				`json:"fullyqualifiedName" binding:"required"`
+	ID					string				`json:"id"`
+	Name				string				`json:"name"`
+	FullyQualifiedName	string				`json:"fullyqualifiedName"`
 	
 	DisplayName			string				`json:"displayName"`
 	Description			string				`json:"description"`
 
-	ServiceType			string				`json:"serviceType" binding:"required"`			
-	Connection			*DatabaseConnection	`json:"connection" binding:"required"`
+	ServiceType			string				`json:"serviceType"`			
+	Connection			*DatabaseConnection	`json:"connection"`
+
+	Deleted				bool				`json:"deleted"`
 }
 
 func (s DBService) Value() (driver.Value, error) {
