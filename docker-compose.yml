@@ -1,0 +1,44 @@
+version: "3.9"
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+
+services:
+  postgres:
+    build:
+      context: postgres
+      dockerfile: Dockerfile
+    image: go-metadata/postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - app-network
+    environment:
+      POSTGRES_DB: go_metadata
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+  
+  backend:
+    build:
+        context: backend
+        dockerfile: Dockerfile
+    image: go-metadata/backend
+    ports:
+      - "8585:8585"
+    networks:
+      - app-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8585/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      - postgres
