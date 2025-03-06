@@ -6,9 +6,9 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/nambuitechx/go-metadata/configs"
-	"github.com/nambuitechx/go-metadata/handlers"
-	"github.com/nambuitechx/go-metadata/repositories"
-	"github.com/nambuitechx/go-metadata/services"
+	"github.com/nambuitechx/go-metadata/handlers/entities"
+	"github.com/nambuitechx/go-metadata/repositories/entities"
+	"github.com/nambuitechx/go-metadata/services/entities"
 )
 
 func getEngine() *gin.Engine {

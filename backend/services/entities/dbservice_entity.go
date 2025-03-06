@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/nambuitechx/go-metadata/models"
-	"github.com/nambuitechx/go-metadata/repositories"
+	"github.com/nambuitechx/go-metadata/models/entities"
+	"github.com/nambuitechx/go-metadata/repositories/entities"
 )
 
 type DBServiceEntityService struct {

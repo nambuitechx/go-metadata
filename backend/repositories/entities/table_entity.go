@@ -2,7 +2,7 @@ package repositories
 
 import (
 	"github.com/jmoiron/sqlx"
-	"github.com/nambuitechx/go-metadata/models"
+	"github.com/nambuitechx/go-metadata/models/entities"
 )
 
 type TableEntityRepository struct {

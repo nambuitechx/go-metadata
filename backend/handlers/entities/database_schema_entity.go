@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/nambuitechx/go-metadata/models"
-	"github.com/nambuitechx/go-metadata/services"
+	"github.com/nambuitechx/go-metadata/models/entities"
+	"github.com/nambuitechx/go-metadata/services/entities"
 )
 
 type DatabaseSchemaEntityHandler struct {
