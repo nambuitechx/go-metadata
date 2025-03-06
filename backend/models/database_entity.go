@@ -21,13 +21,13 @@ type DatabaseEntity struct {
 type Database struct {
 	ID					string				`json:"id"`
 	Name				string				`json:"name"`
-	FullyQualifiedName	string				`json:"fullyqualifiedName"`
+	FullyQualifiedName	string				`json:"fullyQualifiedName"`
 	
 	DisplayName			string				`json:"displayName"`
 	Description			string				`json:"description"`
 
 	ServiceType			string				`json:"serviceType"`
-	Service				EntityReference		`json:"service"`
+	Service				*EntityReference	`json:"service"`
 
 	Deleted				bool				`json:"deleted"`
 }
@@ -44,4 +44,36 @@ func (s *Database) Scan(value interface{}) error {
 	}
 
 	return json.Unmarshal(val, &s)
+}
+
+func (s *Database) ToEntityReference() *EntityReference {
+	entityRef := &EntityReference{
+		ID: s.ID,
+		Type: "database",
+		Name: s.Name,
+		FullyQualifiedName: s.FullyQualifiedName,
+		DisplayName: s.DisplayName,
+		Description: s.Description,
+		Deleted: s.Deleted,
+	}
+
+	return entityRef
+}
+
+// APIs
+type GetDatabaseEntitiesQuery struct {
+	Limit int	`form:"limit"`
+	Offset int	`form:"offset"`
+}
+
+type GetDatabaseEntityParam struct {
+	ID string	`uri:"id" binding:"required"`
+}
+
+type CreateDatabaseEntityPayload struct {
+	Name			string				`json:"name" binding:"required"`
+	DisplayName		string				`json:"displayName"`
+	Description		string				`json:"description"`
+
+	Service			string				`json:"service" binding:"required"`
 }

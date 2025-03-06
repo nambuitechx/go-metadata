@@ -30,9 +30,15 @@ func (r *DBServiceEntityRepository) SelectDBServiceEntities(limit int, offset in
 
 func (r *DBServiceEntityRepository) SelectDBServiceEntityById(id string) (*models.DBServiceEntity, error) {
 	dbserviceEntity := &models.DBServiceEntity{}
-
 	statement := "SELECT * FROM dbservice_entity WHERE id = $1"
 	err := r.DB.Get(dbserviceEntity, statement, id)
+	return dbserviceEntity, err
+}
+
+func (r *DBServiceEntityRepository) SelectDBServiceEntityByFqn(fqn string) (*models.DBServiceEntity, error) {
+	dbserviceEntity := &models.DBServiceEntity{}
+	statement := "SELECT * FROM dbservice_entity WHERE json->>'fullyQualifiedName' = $1"
+	err := r.DB.Get(dbserviceEntity, statement, fqn)
 	return dbserviceEntity, err
 }
 
@@ -42,7 +48,6 @@ func (r *DBServiceEntityRepository) InsertDBServiceEntity(payload *models.DBServ
 		INSERT INTO dbservice_entity(id, name, servicetype, json, updatedat, updatedby, deleted, namehash)
 		VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *
 	`
-	
 	err := r.DB.Get(
 		&dbserviceEntity,
 		statement,
@@ -61,5 +66,11 @@ func (r *DBServiceEntityRepository) InsertDBServiceEntity(payload *models.DBServ
 func (r *DBServiceEntityRepository) DeleteDBServiceEntityById(id string) error {
 	statement := "DELETE FROM dbservice_entity WHERE id = $1"
 	_, err := r.DB.Exec(statement, id)
+	return err
+}
+
+func (r *DBServiceEntityRepository) DeleteDBServiceEntityByFqn(fqn string) error {
+	statement := "DELETE FROM dbservice_entity WHERE json->>'fullyQualifiedName' = $1"
+	_, err := r.DB.Exec(statement, fqn)
 	return err
 }

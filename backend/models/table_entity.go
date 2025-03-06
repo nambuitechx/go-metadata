@@ -21,18 +21,20 @@ type TableEntity struct {
 type Table struct {
 	ID					string				`json:"id"`
 	Name				string				`json:"name"`
-	FullyQualifiedName	string				`json:"fullyqualifiedName"`
+	FullyQualifiedName	string				`json:"fullyQualifiedName"`
 	
 	DisplayName			string				`json:"displayName"`
 	Description			string				`json:"description"`
 
 	ServiceType			string				`json:"serviceType"`
-	Service				EntityReference		`json:"service"`
-	Database			EntityReference		`json:"database"`
-	DatabaseSchema		EntityReference		`json:"databaseSchema"`
+	Service				*EntityReference	`json:"service"`
+	Database			*EntityReference	`json:"database"`
+	DatabaseSchema		*EntityReference	`json:"databaseSchema"`
 
 	TableType			string				`json:"tableType"`
 	TableConstraints	[]TableConstraint	`json:"tableConstraints"`
+
+	Columns				[]Column			`json:"columns"`
 
 	Deleted				bool				`json:"deleted"`
 }
@@ -49,6 +51,20 @@ func (s *Table) Scan(value interface{}) error {
 	}
 
 	return json.Unmarshal(val, &s)
+}
+
+func (s *Table) ToEntityReference() *EntityReference {
+	entityRef := &EntityReference{
+		ID: s.ID,
+		Type: "table",
+		Name: s.Name,
+		FullyQualifiedName: s.FullyQualifiedName,
+		DisplayName: s.DisplayName,
+		Description: s.Description,
+		Deleted: s.Deleted,
+	}
+
+	return entityRef
 }
 
 // Table type
@@ -202,4 +218,27 @@ var RelationshipType = map[string]int {
 	"ONE_TO_MANY": 1,
 	"MANY_TO_ONE": 2,
 	"MANY_TO_MANY": 3,
+}
+
+// APIs
+type GetTableEntitiesQuery struct {
+	Limit int	`form:"limit"`
+	Offset int	`form:"offset"`
+}
+
+type GetTableEntityParam struct {
+	ID string	`uri:"id" binding:"required"`
+}
+
+type CreateTableEntityPayload struct {
+	Name				string				`json:"name" binding:"required"`
+	DisplayName			string				`json:"displayName"`
+	Description			string				`json:"description"`
+
+	DatabaseSchema		string				`json:"databaseSchema" binding:"required"`
+
+	TableType			string				`json:"tableType"`
+	TableConstraints	[]TableConstraint	`json:"tableConstraints"`
+
+	Columns				[]Column			`json:"columns"`
 }

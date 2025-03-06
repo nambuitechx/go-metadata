@@ -23,7 +23,7 @@ type DBServiceEntity struct {
 type DBService struct {
 	ID					string				`json:"id"`
 	Name				string				`json:"name"`
-	FullyQualifiedName	string				`json:"fullyqualifiedName"`
+	FullyQualifiedName	string				`json:"fullyQualifiedName"`
 	
 	DisplayName			string				`json:"displayName"`
 	Description			string				`json:"description"`
@@ -46,6 +46,20 @@ func (s *DBService) Scan(value interface{}) error {
 	}
 
 	return json.Unmarshal(val, &s)
+}
+
+func (s *DBService) ToEntityReference() *EntityReference {
+	entityRef := &EntityReference{
+		ID: s.ID,
+		Type: "databaseService",
+		Name: s.Name,
+		FullyQualifiedName: s.FullyQualifiedName,
+		DisplayName: s.DisplayName,
+		Description: s.Description,
+		Deleted: s.Deleted,
+	}
+
+	return entityRef
 }
 
 // Service type
@@ -188,15 +202,16 @@ type GetDBServiceEntityParam struct {
 	ID string	`uri:"id" binding:"required"`
 }
 
-type CreateDBServiceEntity struct {
+type CreateDBServiceEntityPayload struct {
 	Name			string				`json:"name" binding:"required"`
 	DisplayName		string				`json:"displayName"`
 	Description		string				`json:"description"`
+
 	ServiceType		string				`json:"serviceType" binding:"required"`
 	Connection		*DatabaseConnection	`json:"connection" binding:"required"`
 }
 
-func ValidateCreateDBServiceEntityPayload(payload *CreateDBServiceEntity) error {
+func ValidateCreateDBServiceEntityPayload(payload *CreateDBServiceEntityPayload) error {
 	idx, serviceTypeErr := ValidateServiceType(payload.ServiceType)
 
 	if serviceTypeErr != nil {

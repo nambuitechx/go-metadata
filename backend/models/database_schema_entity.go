@@ -21,14 +21,14 @@ type DatabaseSchemaEntity struct {
 type DatabaseSchema struct {
 	ID					string				`json:"id"`
 	Name				string				`json:"name"`
-	FullyQualifiedName	string				`json:"fullyqualifiedName"`
+	FullyQualifiedName	string				`json:"fullyQualifiedName"`
 	
 	DisplayName			string				`json:"displayName"`
 	Description			string				`json:"description"`
 
 	ServiceType			string				`json:"serviceType"`
-	Service				EntityReference		`json:"service"`
-	Database			EntityReference		`json:"database"`
+	Service				*EntityReference	`json:"service"`
+	Database			*EntityReference	`json:"database"`
 
 	Deleted				bool				`json:"deleted"`
 }
@@ -45,4 +45,36 @@ func (s *DatabaseSchema) Scan(value interface{}) error {
 	}
 
 	return json.Unmarshal(val, &s)
+}
+
+func (s *DatabaseSchema) ToEntityReference() *EntityReference {
+	entityRef := &EntityReference{
+		ID: s.ID,
+		Type: "databaseSchema",
+		Name: s.Name,
+		FullyQualifiedName: s.FullyQualifiedName,
+		DisplayName: s.DisplayName,
+		Description: s.Description,
+		Deleted: s.Deleted,
+	}
+
+	return entityRef
+}
+
+// APIs
+type GetDatabaseSchemaEntitiesQuery struct {
+	Limit int	`form:"limit"`
+	Offset int	`form:"offset"`
+}
+
+type GetDatabaseSchemaEntityParam struct {
+	ID string	`uri:"id" binding:"required"`
+}
+
+type CreateDatabaseSchemaEntityPayload struct {
+	Name			string				`json:"name" binding:"required"`
+	DisplayName		string				`json:"displayName"`
+	Description		string				`json:"description"`
+
+	Database		string				`json:"database" binding:"required"`
 }

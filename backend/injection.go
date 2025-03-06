@@ -18,9 +18,15 @@ func getEngine() *gin.Engine {
 
 	// Repositories
 	dbserviceEntityRepository := repositories.NewDBServiceEntityRepository(db)
+	databaseEntityRepository := repositories.NewDatabaseEntityRepository(db)
+	databaseSchemaEntityRepository := repositories.NewDatabaseSchemaEntityRepository(db)
+	tableEntityRepository := repositories.NewTableEntityRepository(db)
 
 	// Services
-	dbserviceService := services.NewDBServiceService(dbserviceEntityRepository)
+	dbserviceEntityService := services.NewDBServiceEntityService(dbserviceEntityRepository)
+	databaseEntityService := services.NewDatabaseEntityService(dbserviceEntityRepository, databaseEntityRepository)
+	databaseSchemaEntityService := services.NewDatabaseSchemaEntityService(dbserviceEntityRepository, databaseEntityRepository, databaseSchemaEntityRepository)
+	tableEntityService := services.NewTableEntityService(dbserviceEntityRepository, databaseEntityRepository, databaseSchemaEntityRepository, tableEntityRepository)
 
 	// Engine
 	engine := gin.Default()
@@ -37,7 +43,10 @@ func getEngine() *gin.Engine {
 
 	// Routes
 	engine.GET("/health", checkHealth)
-	handlers.InitDBServiceHandler(engine, dbserviceService)
+	handlers.InitDBServiceEntityHandler(engine, dbserviceEntityService)
+	handlers.InitDatabaseEntityHandler(engine, databaseEntityService)
+	handlers.InitDatabaseSchemaEntityHandler(engine, databaseSchemaEntityService)
+	handlers.InitTableEntityHandler(engine, tableEntityService)
 
 	return engine
 }
