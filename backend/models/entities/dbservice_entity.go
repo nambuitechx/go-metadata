@@ -198,8 +198,12 @@ type GetDBServiceEntitiesQuery struct {
 	Offset int	`form:"offset"`
 }
 
-type GetDBServiceEntityParam struct {
+type GetDBServiceEntityByIdParam struct {
 	ID string	`uri:"id" binding:"required"`
+}
+
+type GetDBServiceEntityByFqnParam struct {
+	FQN string	`uri:"fqn" binding:"required"`
 }
 
 type CreateDBServiceEntityPayload struct {

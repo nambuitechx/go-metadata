@@ -226,8 +226,12 @@ type GetTableEntitiesQuery struct {
 	Offset int	`form:"offset"`
 }
 
-type GetTableEntityParam struct {
+type GetTableEntityByIdParam struct {
 	ID string	`uri:"id" binding:"required"`
+}
+
+type GetTableEntityByFqnParam struct {
+	FQN string	`uri:"fqn" binding:"required"`
 }
 
 type CreateTableEntityPayload struct {

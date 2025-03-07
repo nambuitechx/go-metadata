@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/nambuitechx/go-metadata/models/entities"
 	"github.com/nambuitechx/go-metadata/services/entities"
 )
@@ -22,9 +21,11 @@ func InitDatabaseSchemaEntityHandler(e *gin.Engine, databaseSchemaEntityService 
 	{
 		g.GET("/health", h.health)
 		g.GET("/:id", h.getDatabaseSchemaEntityById)
+		g.GET("/name/:fqn", h.getDatabaseSchemaEntityByFqn)
 		g.GET("", h.getAllDatabaseSchemaEntities)
 		g.POST("", h.createDatabaseSchemaEntity)
 		g.DELETE("/:id", h.deleteDatabaseSchemaEntityById)
+		g.DELETE("/name/:fqn", h.deleteDatabaseSchemaEntityByFqn)
 	}
 }
 
@@ -58,29 +59,40 @@ func (h *DatabaseSchemaEntityHandler) getAllDatabaseSchemaEntities(ctx *gin.Cont
 
 func (h *DatabaseSchemaEntityHandler) getDatabaseSchemaEntityById(ctx *gin.Context) {
 	// Get param and validate
-	param := &models.GetDatabaseSchemaEntityParam{}
+	param := &models.GetDatabaseSchemaEntityByIdParam{}
 
 	if err := ctx.ShouldBindUri(param); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })
 		return
 	}
 
-	var databaseSchemaEntity *models.DatabaseSchemaEntity
-	var err error
-
-	// Get database schema entity by either uuid or fully qualified name
-	if invalid := uuid.Validate(param.ID); invalid == nil {
-		databaseSchemaEntity, err = h.DatabaseSchemaEntityService.GetDatabaseSchemaEntityById(param.ID)
-	} else {
-		databaseSchemaEntity, err = h.DatabaseSchemaEntityService.GetDatabaseSchemaEntityByFqn(param.ID)
-	}
+	databaseSchemaEntity, err := h.DatabaseSchemaEntityService.GetDatabaseSchemaEntityById(param.ID)
 	
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{ "message": "Database schema not found", "error": err.Error() })
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Get database schema by id or fqn successfully", "data": databaseSchemaEntity })
+	ctx.JSON(http.StatusOK, gin.H{ "message": "Get database schema by id successfully", "data": databaseSchemaEntity })
+}
+
+func (h *DatabaseSchemaEntityHandler) getDatabaseSchemaEntityByFqn(ctx *gin.Context) {
+	// Get param and validate
+	param := &models.GetDatabaseSchemaEntityByFqnParam{}
+
+	if err := ctx.ShouldBindUri(param); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })
+		return
+	}
+
+	databaseSchemaEntity, err := h.DatabaseSchemaEntityService.GetDatabaseSchemaEntityByFqn(param.FQN)
+	
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{ "message": "Database schema not found", "error": err.Error() })
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{ "message": "Get database schema by fqn successfully", "data": databaseSchemaEntity })
 }
 
 func (h *DatabaseSchemaEntityHandler) createDatabaseSchemaEntity(ctx *gin.Context) {
@@ -100,31 +112,43 @@ func (h *DatabaseSchemaEntityHandler) createDatabaseSchemaEntity(ctx *gin.Contex
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Create database schema successfully", "data": databaseSchemaEntity })
+	ctx.JSON(http.StatusCreated, gin.H{ "message": "Create database schema successfully", "data": databaseSchemaEntity })
 }
 
 func (h *DatabaseSchemaEntityHandler) deleteDatabaseSchemaEntityById(ctx *gin.Context) {
 	// Get param and validate
-	param := &models.GetDatabaseSchemaEntityParam{}
+	param := &models.GetDatabaseSchemaEntityByIdParam{}
 
 	if err := ctx.ShouldBindUri(param); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })
 		return
 	}
 
-	var err error
-
-	// Delete database schema by either uuid or fully qualified name
-	if invalid := uuid.Validate(param.ID); invalid == nil {
-		err = h.DatabaseSchemaEntityService.DeleteDatabaseSchemaEntityById(param.ID)
-	} else {
-		err = h.DatabaseSchemaEntityService.DeleteDatabaseSchemaEntityByFqn(param.ID)
-	}
+	err := h.DatabaseSchemaEntityService.DeleteDatabaseSchemaEntityById(param.ID)
 
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{ "message": "Delete database schema by id or fqn failed", "error": err.Error() })
+		ctx.JSON(http.StatusInternalServerError, gin.H{ "message": "Delete database schema by id failed", "error": err.Error() })
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Delete database schema by id or fqn successfully" })
+	ctx.JSON(http.StatusOK, gin.H{ "message": "Delete database schema by id successfully" })
+}
+
+func (h *DatabaseSchemaEntityHandler) deleteDatabaseSchemaEntityByFqn(ctx *gin.Context) {
+	// Get param and validate
+	param := &models.GetDatabaseSchemaEntityByFqnParam{}
+
+	if err := ctx.ShouldBindUri(param); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })
+		return
+	}
+
+	err := h.DatabaseSchemaEntityService.DeleteDatabaseSchemaEntityByFqn(param.FQN)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{ "message": "Delete database schema by fqn failed", "error": err.Error() })
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{ "message": "Delete database schema by fqn successfully" })
 }

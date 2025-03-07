@@ -67,8 +67,12 @@ type GetDatabaseSchemaEntitiesQuery struct {
 	Offset int	`form:"offset"`
 }
 
-type GetDatabaseSchemaEntityParam struct {
+type GetDatabaseSchemaEntityByIdParam struct {
 	ID string	`uri:"id" binding:"required"`
+}
+
+type GetDatabaseSchemaEntityByFqnParam struct {
+	FQN string	`uri:"fqn" binding:"required"`
 }
 
 type CreateDatabaseSchemaEntityPayload struct {

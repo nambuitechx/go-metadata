@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/nambuitechx/go-metadata/models/entities"
 	"github.com/nambuitechx/go-metadata/services/entities"
 )
@@ -22,9 +21,11 @@ func InitDatabaseEntityHandler(e *gin.Engine, databaseEntityService *services.Da
 	{
 		g.GET("/health", h.health)
 		g.GET("/:id", h.getDatabaseEntityById)
+		g.GET("/name/:fqn", h.getDatabaseEntityByFqn)
 		g.GET("", h.getAllDatabaseEntities)
 		g.POST("", h.createDatabaseEntity)
 		g.DELETE("/:id", h.deleteDatabaseEntityById)
+		g.DELETE("/name/:fqn", h.deleteDatabaseEntityByFqn)
 	}
 }
 
@@ -58,29 +59,40 @@ func (h *DatabaseEntityHandler) getAllDatabaseEntities(ctx *gin.Context) {
 
 func (h *DatabaseEntityHandler) getDatabaseEntityById(ctx *gin.Context) {
 	// Get param and validate
-	param := &models.GetDatabaseEntityParam{}
+	param := &models.GetDatabaseEntityByIdParam{}
 
 	if err := ctx.ShouldBindUri(param); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })
 		return
 	}
 
-	var databaseEntity *models.DatabaseEntity
-	var err error
-
-	// Get database entity by either uuid or fully qualified name
-	if invalid := uuid.Validate(param.ID); invalid == nil {
-		databaseEntity, err = h.DatabaseEntityService.GetDatabaseEntityById(param.ID)
-	} else {
-		databaseEntity, err = h.DatabaseEntityService.GetDatabaseEntityByFqn(param.ID)
-	}
+	databaseEntity, err := h.DatabaseEntityService.GetDatabaseEntityById(param.ID)
 	
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{ "message": "Database not found", "error": err.Error() })
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Get database by id or fqn successfully", "data": databaseEntity })
+	ctx.JSON(http.StatusOK, gin.H{ "message": "Get database by id successfully", "data": databaseEntity })
+}
+
+func (h *DatabaseEntityHandler) getDatabaseEntityByFqn(ctx *gin.Context) {
+	// Get param and validate
+	param := &models.GetDatabaseEntityByFqnParam{}
+
+	if err := ctx.ShouldBindUri(param); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })
+		return
+	}
+
+	databaseEntity, err := h.DatabaseEntityService.GetDatabaseEntityByFqn(param.FQN)
+	
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{ "message": "Database not found", "error": err.Error() })
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{ "message": "Get database by fqn successfully", "data": databaseEntity })
 }
 
 func (h *DatabaseEntityHandler) createDatabaseEntity(ctx *gin.Context) {
@@ -100,31 +112,43 @@ func (h *DatabaseEntityHandler) createDatabaseEntity(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Create database successfully", "data": databaseEntity })
+	ctx.JSON(http.StatusCreated, gin.H{ "message": "Create database successfully", "data": databaseEntity })
 }
 
 func (h *DatabaseEntityHandler) deleteDatabaseEntityById(ctx *gin.Context) {
 	// Get param and validate
-	param := &models.GetDatabaseEntityParam{}
+	param := &models.GetDatabaseEntityByIdParam{}
 
 	if err := ctx.ShouldBindUri(param); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })
 		return
 	}
 
-	var err error
-
-	// Delete database by either uuid or fully qualified name
-	if invalid := uuid.Validate(param.ID); invalid == nil {
-		err = h.DatabaseEntityService.DeleteDatabaseEntityById(param.ID)
-	} else {
-		err = h.DatabaseEntityService.DeleteDatabaseEntityByFqn(param.ID)
-	}
+	err := h.DatabaseEntityService.DeleteDatabaseEntityById(param.ID)
 
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{ "message": "Delete database by id or fqn failed", "error": err.Error() })
+		ctx.JSON(http.StatusInternalServerError, gin.H{ "message": "Delete database by id failed", "error": err.Error() })
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Delete database by id or fqn successfully" })
+	ctx.JSON(http.StatusOK, gin.H{ "message": "Delete database by id successfully" })
+}
+
+func (h *DatabaseEntityHandler) deleteDatabaseEntityByFqn(ctx *gin.Context) {
+	// Get param and validate
+	param := &models.GetDatabaseEntityByFqnParam{}
+
+	if err := ctx.ShouldBindUri(param); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })
+		return
+	}
+
+	err := h.DatabaseEntityService.DeleteDatabaseEntityByFqn(param.FQN)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{ "message": "Delete database by fqn failed", "error": err.Error() })
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{ "message": "Delete database by fqn successfully" })
 }

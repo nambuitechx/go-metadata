@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/nambuitechx/go-metadata/models/entities"
 	"github.com/nambuitechx/go-metadata/services/entities"
 )
@@ -22,9 +21,11 @@ func InitTableEntityHandler(e *gin.Engine, tableEntityService *services.TableEnt
 	{
 		g.GET("/health", h.health)
 		g.GET("/:id", h.getTableEntityById)
+		g.GET("/name/:fqn", h.getTableEntityByFqn)
 		g.GET("", h.getAllTableEntities)
 		g.POST("", h.createTableEntity)
 		g.DELETE("/:id", h.deleteTableEntityById)
+		g.DELETE("/name/:fqn", h.deleteTableEntityByFqn)
 	}
 }
 
@@ -58,29 +59,40 @@ func (h *TableEntityHandler) getAllTableEntities(ctx *gin.Context) {
 
 func (h *TableEntityHandler) getTableEntityById(ctx *gin.Context) {
 	// Get param and validate
-	param := &models.GetTableEntityParam{}
+	param := &models.GetTableEntityByIdParam{}
 
 	if err := ctx.ShouldBindUri(param); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })
 		return
 	}
 
-	var tableEntity *models.TableEntity
-	var err error
-
-	// Get table entity by either uuid or fully qualified name
-	if invalid := uuid.Validate(param.ID); invalid == nil {
-		tableEntity, err = h.TableEntityService.GetTableEntityById(param.ID)
-	} else {
-		tableEntity, err = h.TableEntityService.GetTableEntityByFqn(param.ID)
-	}
+	tableEntity, err := h.TableEntityService.GetTableEntityById(param.ID)
 	
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{ "message": "Table not found", "error": err.Error() })
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Get table by id or fqn successfully", "data": tableEntity })
+	ctx.JSON(http.StatusOK, gin.H{ "message": "Get table by id successfully", "data": tableEntity })
+}
+
+func (h *TableEntityHandler) getTableEntityByFqn(ctx *gin.Context) {
+	// Get param and validate
+	param := &models.GetTableEntityByFqnParam{}
+
+	if err := ctx.ShouldBindUri(param); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })
+		return
+	}
+
+	tableEntity, err := h.TableEntityService.GetTableEntityByFqn(param.FQN)
+	
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{ "message": "Table not found", "error": err.Error() })
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{ "message": "Get table by fqn successfully", "data": tableEntity })
 }
 
 func (h *TableEntityHandler) createTableEntity(ctx *gin.Context) {
@@ -100,31 +112,43 @@ func (h *TableEntityHandler) createTableEntity(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Create table successfully", "data": tableEntity })
+	ctx.JSON(http.StatusCreated, gin.H{ "message": "Create table successfully", "data": tableEntity })
 }
 
 func (h *TableEntityHandler) deleteTableEntityById(ctx *gin.Context) {
 	// Get param and validate
-	param := &models.GetTableEntityParam{}
+	param := &models.GetTableEntityByIdParam{}
 
 	if err := ctx.ShouldBindUri(param); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })
 		return
 	}
 
-	var err error
-
-	// Delete table by either uuid or fully qualified name
-	if invalid := uuid.Validate(param.ID); invalid == nil {
-		err = h.TableEntityService.DeleteTableEntityById(param.ID)
-	} else {
-		err = h.TableEntityService.DeleteTableEntityByFqn(param.ID)
-	}
+	err := h.TableEntityService.DeleteTableEntityById(param.ID)
 
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{ "message": "Delete table by id or fqn failed", "error": err.Error() })
+		ctx.JSON(http.StatusInternalServerError, gin.H{ "message": "Delete table by id failed", "error": err.Error() })
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Delete table by id or fqn successfully" })
+	ctx.JSON(http.StatusOK, gin.H{ "message": "Delete table by id successfully" })
+}
+
+func (h *TableEntityHandler) deleteTableEntityByFqn(ctx *gin.Context) {
+	// Get param and validate
+	param := &models.GetTableEntityByFqnParam{}
+
+	if err := ctx.ShouldBindUri(param); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })
+		return
+	}
+
+	err := h.TableEntityService.DeleteTableEntityByFqn(param.FQN)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{ "message": "Delete table by fqn failed", "error": err.Error() })
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{ "message": "Delete table by fqn successfully" })
 }
