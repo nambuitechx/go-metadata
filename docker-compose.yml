@@ -14,7 +14,7 @@ services:
       dockerfile: Dockerfile
     image: go-metadata/postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     networks:
       - app-network
     environment:

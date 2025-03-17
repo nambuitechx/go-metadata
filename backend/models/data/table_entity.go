@@ -4,6 +4,8 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
+
+	typeModels "github.com/nambuitechx/go-metadata/models/type"
 )
 
 // Table entity
@@ -19,24 +21,24 @@ type TableEntity struct {
 
 // Table
 type Table struct {
-	ID					string				`json:"id"`
-	Name				string				`json:"name"`
-	FullyQualifiedName	string				`json:"fullyQualifiedName"`
+	ID					string						`json:"id"`
+	Name				string						`json:"name"`
+	FullyQualifiedName	string						`json:"fullyQualifiedName"`
 	
-	DisplayName			string				`json:"displayName"`
-	Description			string				`json:"description"`
+	DisplayName			string						`json:"displayName"`
+	Description			string						`json:"description"`
 
-	ServiceType			string				`json:"serviceType"`
-	Service				*EntityReference	`json:"service"`
-	Database			*EntityReference	`json:"database"`
-	DatabaseSchema		*EntityReference	`json:"databaseSchema"`
+	ServiceType			string						`json:"serviceType"`
+	Service				*typeModels.EntityReference	`json:"service"`
+	Database			*typeModels.EntityReference	`json:"database"`
+	DatabaseSchema		*typeModels.EntityReference	`json:"databaseSchema"`
 
-	TableType			string				`json:"tableType"`
-	TableConstraints	[]TableConstraint	`json:"tableConstraints"`
+	TableType			string						`json:"tableType"`
+	TableConstraints	[]TableConstraint			`json:"tableConstraints"`
 
-	Columns				[]Column			`json:"columns"`
+	Columns				[]Column					`json:"columns"`
 
-	Deleted				bool				`json:"deleted"`
+	Deleted				bool						`json:"deleted"`
 }
 
 func (s Table) Value() (driver.Value, error) {
@@ -53,8 +55,8 @@ func (s *Table) Scan(value interface{}) error {
 	return json.Unmarshal(val, &s)
 }
 
-func (s *Table) ToEntityReference() *EntityReference {
-	entityRef := &EntityReference{
+func (s *Table) ToEntityReference() *typeModels.EntityReference {
+	entityRef := &typeModels.EntityReference{
 		ID: s.ID,
 		Type: "table",
 		Name: s.Name,

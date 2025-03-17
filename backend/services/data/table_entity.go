@@ -7,22 +7,23 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/nambuitechx/go-metadata/models/entities"
-	"github.com/nambuitechx/go-metadata/repositories/entities"
+	dataModels "github.com/nambuitechx/go-metadata/models/data"
+	servicesRepositories "github.com/nambuitechx/go-metadata/repositories/services"
+	dataRepositories "github.com/nambuitechx/go-metadata/repositories/data"
 )
 
 type TableEntityService struct {
-	DBServiceEntityRepository *repositories.DBServiceEntityRepository
-	DatabaseEntityRepository *repositories.DatabaseEntityRepository
-	DatabaseSchemaEntityRepository *repositories.DatabaseSchemaEntityRepository
-	TableEntityRepository *repositories.TableEntityRepository
+	DBServiceEntityRepository *servicesRepositories.DBServiceEntityRepository
+	DatabaseEntityRepository *dataRepositories.DatabaseEntityRepository
+	DatabaseSchemaEntityRepository *dataRepositories.DatabaseSchemaEntityRepository
+	TableEntityRepository *dataRepositories.TableEntityRepository
 }
 
 func NewTableEntityService(
-	dbserviceEntityRepository *repositories.DBServiceEntityRepository,
-	databaseEntityRepository *repositories.DatabaseEntityRepository,
-	databaseSchemaEntityRepository *repositories.DatabaseSchemaEntityRepository,
-	tableEntityRepository *repositories.TableEntityRepository,
+	dbserviceEntityRepository *servicesRepositories.DBServiceEntityRepository,
+	databaseEntityRepository *dataRepositories.DatabaseEntityRepository,
+	databaseSchemaEntityRepository *dataRepositories.DatabaseSchemaEntityRepository,
+	tableEntityRepository *dataRepositories.TableEntityRepository,
 ) *TableEntityService {
 	return &TableEntityService{
 		DBServiceEntityRepository: dbserviceEntityRepository,
@@ -36,22 +37,22 @@ func (s *TableEntityService) Health() string {
 	return "Table service is available"
 }
 
-func (s *TableEntityService) GetAllTableEntities(limit int, offset int) ([]models.TableEntity, error) {
+func (s *TableEntityService) GetAllTableEntities(limit int, offset int) ([]dataModels.TableEntity, error) {
 	tableEntity, err := s.TableEntityRepository.SelectTableEntities(limit, offset)
 	return tableEntity, err
 }
 
-func (s *TableEntityService) GetTableEntityById(id string) (*models.TableEntity, error) {
+func (s *TableEntityService) GetTableEntityById(id string) (*dataModels.TableEntity, error) {
 	tableEntity, err := s.TableEntityRepository.SelectTableEntityById(id)
 	return tableEntity, err
 }
 
-func (s *TableEntityService) GetTableEntityByFqn(fqn string) (*models.TableEntity, error) {
+func (s *TableEntityService) GetTableEntityByFqn(fqn string) (*dataModels.TableEntity, error) {
 	tableEntity, err := s.TableEntityRepository.SelectTableEntityByFqn(fqn)
 	return tableEntity, err
 }
 
-func (s *TableEntityService) CreateTableEntity(payload *models.CreateTableEntityPayload) (*models.TableEntity, error) {
+func (s *TableEntityService) CreateTableEntity(payload *dataModels.CreateTableEntityPayload) (*dataModels.TableEntity, error) {
 	id := uuid.NewString()
 	now := time.Now().Unix()
 
@@ -90,7 +91,7 @@ func (s *TableEntityService) CreateTableEntity(payload *models.CreateTableEntity
 	databaseSchemaEntityRef := databaseSchema.Json.ToEntityReference()
 
 	// Populate table
-	table := &models.Table{
+	table := &dataModels.Table{
 		ID: id,
 		Name: payload.Name,
 		FullyQualifiedName: fmt.Sprintf("%v.%v", payload.DatabaseSchema, payload.Name),
@@ -106,7 +107,7 @@ func (s *TableEntityService) CreateTableEntity(payload *models.CreateTableEntity
 		Deleted: false,
 	}
 
-	entity := &models.TableEntity{
+	entity := &dataModels.TableEntity{
 		ID: id,
 		Name: payload.Name,
 		Json: table,

@@ -6,9 +6,12 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/nambuitechx/go-metadata/configs"
-	"github.com/nambuitechx/go-metadata/handlers/entities"
-	"github.com/nambuitechx/go-metadata/repositories/entities"
-	"github.com/nambuitechx/go-metadata/services/entities"
+	servicesHandlers "github.com/nambuitechx/go-metadata/handlers/services"
+	dataHandlers "github.com/nambuitechx/go-metadata/handlers/data"
+	servicesServices "github.com/nambuitechx/go-metadata/services/services"
+	dataServices "github.com/nambuitechx/go-metadata/services/data"
+	servicesRepositories "github.com/nambuitechx/go-metadata/repositories/services"
+	dataRepositories "github.com/nambuitechx/go-metadata/repositories/data"
 )
 
 func getEngine() *gin.Engine {
@@ -17,16 +20,16 @@ func getEngine() *gin.Engine {
 	db := configs.NewDatabaseConnection(settings).DB
 
 	// Repositories
-	dbserviceEntityRepository := repositories.NewDBServiceEntityRepository(db)
-	databaseEntityRepository := repositories.NewDatabaseEntityRepository(db)
-	databaseSchemaEntityRepository := repositories.NewDatabaseSchemaEntityRepository(db)
-	tableEntityRepository := repositories.NewTableEntityRepository(db)
+	dbserviceEntityRepository := servicesRepositories.NewDBServiceEntityRepository(db)
+	databaseEntityRepository := dataRepositories.NewDatabaseEntityRepository(db)
+	databaseSchemaEntityRepository := dataRepositories.NewDatabaseSchemaEntityRepository(db)
+	tableEntityRepository := dataRepositories.NewTableEntityRepository(db)
 
 	// Services
-	dbserviceEntityService := services.NewDBServiceEntityService(dbserviceEntityRepository)
-	databaseEntityService := services.NewDatabaseEntityService(dbserviceEntityRepository, databaseEntityRepository)
-	databaseSchemaEntityService := services.NewDatabaseSchemaEntityService(dbserviceEntityRepository, databaseEntityRepository, databaseSchemaEntityRepository)
-	tableEntityService := services.NewTableEntityService(dbserviceEntityRepository, databaseEntityRepository, databaseSchemaEntityRepository, tableEntityRepository)
+	dbserviceEntityService := servicesServices.NewDBServiceEntityService(dbserviceEntityRepository)
+	databaseEntityService := dataServices.NewDatabaseEntityService(dbserviceEntityRepository, databaseEntityRepository)
+	databaseSchemaEntityService := dataServices.NewDatabaseSchemaEntityService(dbserviceEntityRepository, databaseEntityRepository, databaseSchemaEntityRepository)
+	tableEntityService := dataServices.NewTableEntityService(dbserviceEntityRepository, databaseEntityRepository, databaseSchemaEntityRepository, tableEntityRepository)
 
 	// Engine
 	engine := gin.Default()
@@ -43,10 +46,10 @@ func getEngine() *gin.Engine {
 
 	// Routes
 	engine.GET("/health", checkHealth)
-	handlers.InitDBServiceEntityHandler(engine, dbserviceEntityService)
-	handlers.InitDatabaseEntityHandler(engine, databaseEntityService)
-	handlers.InitDatabaseSchemaEntityHandler(engine, databaseSchemaEntityService)
-	handlers.InitTableEntityHandler(engine, tableEntityService)
+	servicesHandlers.InitDBServiceEntityHandler(engine, dbserviceEntityService)
+	dataHandlers.InitDatabaseEntityHandler(engine, databaseEntityService)
+	dataHandlers.InitDatabaseSchemaEntityHandler(engine, databaseSchemaEntityService)
+	dataHandlers.InitTableEntityHandler(engine, tableEntityService)
 
 	return engine
 }

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"strings"
+
+	typeModels "github.com/nambuitechx/go-metadata/models/type"
 )
 
 // Database service entity
@@ -48,8 +50,8 @@ func (s *DBService) Scan(value interface{}) error {
 	return json.Unmarshal(val, &s)
 }
 
-func (s *DBService) ToEntityReference() *EntityReference {
-	entityRef := &EntityReference{
+func (s *DBService) ToEntityReference() *typeModels.EntityReference {
+	entityRef := &typeModels.EntityReference{
 		ID: s.ID,
 		Type: "databaseService",
 		Name: s.Name,

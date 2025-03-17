@@ -4,15 +4,15 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nambuitechx/go-metadata/models/entities"
-	"github.com/nambuitechx/go-metadata/services/entities"
+	servicesModels "github.com/nambuitechx/go-metadata/models/services"
+	servicesServices "github.com/nambuitechx/go-metadata/services/services"
 )
 
 type DBServiceEntityHandler struct {
-	DBServiceEntityService *services.DBServiceEntityService
+	DBServiceEntityService *servicesServices.DBServiceEntityService
 }
 
-func InitDBServiceEntityHandler(e *gin.Engine, dbserviceEntityService *services.DBServiceEntityService) {
+func InitDBServiceEntityHandler(e *gin.Engine, dbserviceEntityService *servicesServices.DBServiceEntityService) {
 	// Init handler
 	h := &DBServiceEntityHandler{ DBServiceEntityService: dbserviceEntityService }
 
@@ -35,7 +35,7 @@ func (h *DBServiceEntityHandler) health(ctx *gin.Context) {
 
 func (h *DBServiceEntityHandler) getAllDBServiceEntities(ctx *gin.Context) {
 	// Get query and validate
-	query := &models.GetDBServiceEntitiesQuery{}
+	query := &servicesModels.GetDBServiceEntitiesQuery{}
 
 	if err := ctx.ShouldBindQuery(query); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid query", "error": err.Error() })
@@ -59,7 +59,7 @@ func (h *DBServiceEntityHandler) getAllDBServiceEntities(ctx *gin.Context) {
 
 func (h *DBServiceEntityHandler) getDBServiceEntityById(ctx *gin.Context) {
 	// Get param and validate
-	param := &models.GetDBServiceEntityByIdParam{}
+	param := &servicesModels.GetDBServiceEntityByIdParam{}
 
 	if err := ctx.ShouldBindUri(param); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })
@@ -78,7 +78,7 @@ func (h *DBServiceEntityHandler) getDBServiceEntityById(ctx *gin.Context) {
 
 func (h *DBServiceEntityHandler) getDBServiceEntityByFqn(ctx *gin.Context) {
 	// Get param and validate
-	param := &models.GetDBServiceEntityByFqnParam{}
+	param := &servicesModels.GetDBServiceEntityByFqnParam{}
 
 	if err := ctx.ShouldBindUri(param); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })
@@ -97,7 +97,7 @@ func (h *DBServiceEntityHandler) getDBServiceEntityByFqn(ctx *gin.Context) {
 
 func (h *DBServiceEntityHandler) createDBServiceEntity(ctx *gin.Context) {
 	// Get payload
-	payload := &models.CreateDBServiceEntityPayload{}
+	payload := &servicesModels.CreateDBServiceEntityPayload{}
 
 	if err := ctx.ShouldBindJSON(payload); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid payload", "error": err.Error() })
@@ -105,7 +105,7 @@ func (h *DBServiceEntityHandler) createDBServiceEntity(ctx *gin.Context) {
 	}
 
 	// Validate payload
-	if err := models.ValidateCreateDBServiceEntityPayload(payload); err != nil {
+	if err := servicesModels.ValidateCreateDBServiceEntityPayload(payload); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Create dbservice failed", "error": err.Error() })
 		return
 	}
@@ -123,7 +123,7 @@ func (h *DBServiceEntityHandler) createDBServiceEntity(ctx *gin.Context) {
 
 func (h *DBServiceEntityHandler) deleteDBServiceEntityById(ctx *gin.Context) {
 	// Get param and validate
-	param := &models.GetDBServiceEntityByIdParam{}
+	param := &servicesModels.GetDBServiceEntityByIdParam{}
 
 	if err := ctx.ShouldBindUri(param); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })
@@ -142,7 +142,7 @@ func (h *DBServiceEntityHandler) deleteDBServiceEntityById(ctx *gin.Context) {
 
 func (h *DBServiceEntityHandler) deleteDBServiceEntityByFqn(ctx *gin.Context) {
 	// Get param and validate
-	param := &models.GetDBServiceEntityByFqnParam{}
+	param := &servicesModels.GetDBServiceEntityByFqnParam{}
 
 	if err := ctx.ShouldBindUri(param); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })

@@ -5,18 +5,19 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/nambuitechx/go-metadata/models/entities"
-	"github.com/nambuitechx/go-metadata/repositories/entities"
+	dataModels "github.com/nambuitechx/go-metadata/models/data"
+	servicesRepositories "github.com/nambuitechx/go-metadata/repositories/services"
+	dataRepositories "github.com/nambuitechx/go-metadata/repositories/data"
 )
 
 type DatabaseEntityService struct {
-	DBServiceEntityRepository *repositories.DBServiceEntityRepository
-	DatabaseEntityRepository *repositories.DatabaseEntityRepository
+	DBServiceEntityRepository *servicesRepositories.DBServiceEntityRepository
+	DatabaseEntityRepository *dataRepositories.DatabaseEntityRepository
 }
 
 func NewDatabaseEntityService(
-	dbserviceEntityRepository *repositories.DBServiceEntityRepository,
-	databaseEntityRepository *repositories.DatabaseEntityRepository,
+	dbserviceEntityRepository *servicesRepositories.DBServiceEntityRepository,
+	databaseEntityRepository *dataRepositories.DatabaseEntityRepository,
 ) *DatabaseEntityService {
 	return &DatabaseEntityService{
 		DBServiceEntityRepository: dbserviceEntityRepository,
@@ -28,22 +29,22 @@ func (s *DatabaseEntityService) Health() string {
 	return "Database service is available"
 }
 
-func (s *DatabaseEntityService) GetAllDatabaseEntities(limit int, offset int) ([]models.DatabaseEntity, error) {
+func (s *DatabaseEntityService) GetAllDatabaseEntities(limit int, offset int) ([]dataModels.DatabaseEntity, error) {
 	databaseEntity, err := s.DatabaseEntityRepository.SelectDatabaseEntities(limit, offset)
 	return databaseEntity, err
 }
 
-func (s *DatabaseEntityService) GetDatabaseEntityById(id string) (*models.DatabaseEntity, error) {
+func (s *DatabaseEntityService) GetDatabaseEntityById(id string) (*dataModels.DatabaseEntity, error) {
 	databaseEntity, err := s.DatabaseEntityRepository.SelectDatabaseEntityById(id)
 	return databaseEntity, err
 }
 
-func (s *DatabaseEntityService) GetDatabaseEntityByFqn(fqn string) (*models.DatabaseEntity, error) {
+func (s *DatabaseEntityService) GetDatabaseEntityByFqn(fqn string) (*dataModels.DatabaseEntity, error) {
 	databaseEntity, err := s.DatabaseEntityRepository.SelectDatabaseEntityByFqn(fqn)
 	return databaseEntity, err
 }
 
-func (s *DatabaseEntityService) CreateDatabaseEntity(payload *models.CreateDatabaseEntityPayload) (*models.DatabaseEntity, error) {
+func (s *DatabaseEntityService) CreateDatabaseEntity(payload *dataModels.CreateDatabaseEntityPayload) (*dataModels.DatabaseEntity, error) {
 	id := uuid.NewString()
 	now := time.Now().Unix()
 
@@ -57,7 +58,7 @@ func (s *DatabaseEntityService) CreateDatabaseEntity(payload *models.CreateDatab
 	dbserviceEntityRef := dbservice.Json.ToEntityReference()
 
 	// Populate database
-	database := &models.Database{
+	database := &dataModels.Database{
 		ID: id,
 		Name: payload.Name,
 		FullyQualifiedName: fmt.Sprintf("%v.%v", payload.Service, payload.Name),
@@ -68,7 +69,7 @@ func (s *DatabaseEntityService) CreateDatabaseEntity(payload *models.CreateDatab
 		Deleted: false,
 	}
 
-	entity := &models.DatabaseEntity{
+	entity := &dataModels.DatabaseEntity{
 		ID: id,
 		Name: payload.Name,
 		Json: database,

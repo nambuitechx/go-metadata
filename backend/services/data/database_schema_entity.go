@@ -7,20 +7,21 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/nambuitechx/go-metadata/models/entities"
-	"github.com/nambuitechx/go-metadata/repositories/entities"
+	dataModels "github.com/nambuitechx/go-metadata/models/data"
+	servicesRepositories "github.com/nambuitechx/go-metadata/repositories/services"
+	dataRepositories "github.com/nambuitechx/go-metadata/repositories/data"
 )
 
 type DatabaseSchemaEntityService struct {
-	DBServiceEntityRepository *repositories.DBServiceEntityRepository
-	DatabaseEntityRepository *repositories.DatabaseEntityRepository
-	DatabaseSchemaEntityRepository *repositories.DatabaseSchemaEntityRepository
+	DBServiceEntityRepository *servicesRepositories.DBServiceEntityRepository
+	DatabaseEntityRepository *dataRepositories.DatabaseEntityRepository
+	DatabaseSchemaEntityRepository *dataRepositories.DatabaseSchemaEntityRepository
 }
 
 func NewDatabaseSchemaEntityService(
-	dbserviceEntityRepository *repositories.DBServiceEntityRepository,
-	databaseEntityRepository *repositories.DatabaseEntityRepository,
-	databaseSchemaEntityRepository *repositories.DatabaseSchemaEntityRepository,
+	dbserviceEntityRepository *servicesRepositories.DBServiceEntityRepository,
+	databaseEntityRepository *dataRepositories.DatabaseEntityRepository,
+	databaseSchemaEntityRepository *dataRepositories.DatabaseSchemaEntityRepository,
 ) *DatabaseSchemaEntityService {
 	return &DatabaseSchemaEntityService{
 		DBServiceEntityRepository: dbserviceEntityRepository,
@@ -33,22 +34,22 @@ func (s *DatabaseSchemaEntityService) Health() string {
 	return "Database schema service is available"
 }
 
-func (s *DatabaseSchemaEntityService) GetAllDatabaseSchemaEntities(limit int, offset int) ([]models.DatabaseSchemaEntity, error) {
+func (s *DatabaseSchemaEntityService) GetAllDatabaseSchemaEntities(limit int, offset int) ([]dataModels.DatabaseSchemaEntity, error) {
 	databaseSchemaEntity, err := s.DatabaseSchemaEntityRepository.SelectDatabaseSchemaEntities(limit, offset)
 	return databaseSchemaEntity, err
 }
 
-func (s *DatabaseSchemaEntityService) GetDatabaseSchemaEntityById(id string) (*models.DatabaseSchemaEntity, error) {
+func (s *DatabaseSchemaEntityService) GetDatabaseSchemaEntityById(id string) (*dataModels.DatabaseSchemaEntity, error) {
 	databaseSchemaEntity, err := s.DatabaseSchemaEntityRepository.SelectDatabaseSchemaEntityById(id)
 	return databaseSchemaEntity, err
 }
 
-func (s *DatabaseSchemaEntityService) GetDatabaseSchemaEntityByFqn(fqn string) (*models.DatabaseSchemaEntity, error) {
+func (s *DatabaseSchemaEntityService) GetDatabaseSchemaEntityByFqn(fqn string) (*dataModels.DatabaseSchemaEntity, error) {
 	databaseSchemaEntity, err := s.DatabaseSchemaEntityRepository.SelectDatabaseSchemaEntityByFqn(fqn)
 	return databaseSchemaEntity, err
 }
 
-func (s *DatabaseSchemaEntityService) CreateDatabaseSchemaEntity(payload *models.CreateDatabaseSchemaEntityPayload) (*models.DatabaseSchemaEntity, error) {
+func (s *DatabaseSchemaEntityService) CreateDatabaseSchemaEntity(payload *dataModels.CreateDatabaseSchemaEntityPayload) (*dataModels.DatabaseSchemaEntity, error) {
 	id := uuid.NewString()
 	now := time.Now().Unix()
 
@@ -78,7 +79,7 @@ func (s *DatabaseSchemaEntityService) CreateDatabaseSchemaEntity(payload *models
 	databaseEntityRef := database.Json.ToEntityReference()
 
 	// Populate database schema
-	databaseSchema := &models.DatabaseSchema{
+	databaseSchema := &dataModels.DatabaseSchema{
 		ID: id,
 		Name: payload.Name,
 		FullyQualifiedName: fmt.Sprintf("%v.%v", payload.Database, payload.Name),
@@ -90,7 +91,7 @@ func (s *DatabaseSchemaEntityService) CreateDatabaseSchemaEntity(payload *models
 		Deleted: false,
 	}
 
-	entity := &models.DatabaseSchemaEntity{
+	entity := &dataModels.DatabaseSchemaEntity{
 		ID: id,
 		Name: payload.Name,
 		Json: databaseSchema,

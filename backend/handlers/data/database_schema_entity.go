@@ -4,15 +4,15 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nambuitechx/go-metadata/models/entities"
-	"github.com/nambuitechx/go-metadata/services/entities"
+	dataModels "github.com/nambuitechx/go-metadata/models/data"
+	dataServices "github.com/nambuitechx/go-metadata/services/data"
 )
 
 type DatabaseSchemaEntityHandler struct {
-	DatabaseSchemaEntityService *services.DatabaseSchemaEntityService
+	DatabaseSchemaEntityService *dataServices.DatabaseSchemaEntityService
 }
 
-func InitDatabaseSchemaEntityHandler(e *gin.Engine, databaseSchemaEntityService *services.DatabaseSchemaEntityService) {
+func InitDatabaseSchemaEntityHandler(e *gin.Engine, databaseSchemaEntityService *dataServices.DatabaseSchemaEntityService) {
 	// Init handler
 	h := &DatabaseSchemaEntityHandler{ DatabaseSchemaEntityService: databaseSchemaEntityService }
 
@@ -35,7 +35,7 @@ func (h *DatabaseSchemaEntityHandler) health(ctx *gin.Context) {
 
 func (h *DatabaseSchemaEntityHandler) getAllDatabaseSchemaEntities(ctx *gin.Context) {
 	// Get query and validate
-	query := &models.GetDatabaseSchemaEntitiesQuery{}
+	query := &dataModels.GetDatabaseSchemaEntitiesQuery{}
 
 	if err := ctx.ShouldBindQuery(query); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid query", "error": err.Error() })
@@ -59,7 +59,7 @@ func (h *DatabaseSchemaEntityHandler) getAllDatabaseSchemaEntities(ctx *gin.Cont
 
 func (h *DatabaseSchemaEntityHandler) getDatabaseSchemaEntityById(ctx *gin.Context) {
 	// Get param and validate
-	param := &models.GetDatabaseSchemaEntityByIdParam{}
+	param := &dataModels.GetDatabaseSchemaEntityByIdParam{}
 
 	if err := ctx.ShouldBindUri(param); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })
@@ -78,7 +78,7 @@ func (h *DatabaseSchemaEntityHandler) getDatabaseSchemaEntityById(ctx *gin.Conte
 
 func (h *DatabaseSchemaEntityHandler) getDatabaseSchemaEntityByFqn(ctx *gin.Context) {
 	// Get param and validate
-	param := &models.GetDatabaseSchemaEntityByFqnParam{}
+	param := &dataModels.GetDatabaseSchemaEntityByFqnParam{}
 
 	if err := ctx.ShouldBindUri(param); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })
@@ -97,7 +97,7 @@ func (h *DatabaseSchemaEntityHandler) getDatabaseSchemaEntityByFqn(ctx *gin.Cont
 
 func (h *DatabaseSchemaEntityHandler) createDatabaseSchemaEntity(ctx *gin.Context) {
 	// Get payload
-	payload := &models.CreateDatabaseSchemaEntityPayload{}
+	payload := &dataModels.CreateDatabaseSchemaEntityPayload{}
 
 	if err := ctx.ShouldBindJSON(payload); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid payload", "error": err.Error() })
@@ -117,7 +117,7 @@ func (h *DatabaseSchemaEntityHandler) createDatabaseSchemaEntity(ctx *gin.Contex
 
 func (h *DatabaseSchemaEntityHandler) deleteDatabaseSchemaEntityById(ctx *gin.Context) {
 	// Get param and validate
-	param := &models.GetDatabaseSchemaEntityByIdParam{}
+	param := &dataModels.GetDatabaseSchemaEntityByIdParam{}
 
 	if err := ctx.ShouldBindUri(param); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })
@@ -136,7 +136,7 @@ func (h *DatabaseSchemaEntityHandler) deleteDatabaseSchemaEntityById(ctx *gin.Co
 
 func (h *DatabaseSchemaEntityHandler) deleteDatabaseSchemaEntityByFqn(ctx *gin.Context) {
 	// Get param and validate
-	param := &models.GetDatabaseSchemaEntityByFqnParam{}
+	param := &dataModels.GetDatabaseSchemaEntityByFqnParam{}
 
 	if err := ctx.ShouldBindUri(param); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })

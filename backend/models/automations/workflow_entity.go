@@ -1,8 +1,21 @@
 package models
 
 import (
-	"github.com/nambuitechx/go-metadata/models/entities"
+	servicesModels "github.com/nambuitechx/go-metadata/models/services"
 )
+
+// Workflow entity
+type WorkflowEntity struct {
+	ID					string				`db:"id" json:"id"`
+	Name				string				`db:"name" json:"name"`
+	WorkflowType		string				`db:"workflowtype" json:"workflowType"`
+	Status				string				`db:"status" json:"status"`
+	Json				*Workflow			`db:"json" json:"json"`
+	UpdatedAt			int64				`db:"updatedat" json:"updatedAt"`
+	UpdatedBy			string				`db:"updatedby" json:"updatedBy"`
+	Deleted				bool				`db:"deleted" json:"deleted"`
+	NameHash			string				`db:"namehash" json:"nameHash"`
+}
 
 type Workflow struct {
 	ID						string					`json:"id"`
@@ -27,11 +40,11 @@ var WorkflowStatus = map[string]int {"Pending": 0, "Successful": 1, "Failed": 2,
 
 // Test service connection request
 type TestServiceConnection struct {
-	ServiceType			string							`json:"serviceType"`
-	ServiceName			string							`json:"serviceName"`
+	ServiceType			string							`json:"serviceType"`	// Ex: Database, Dashboard, Messaging, etc.
+	ServiceName			string							`json:"serviceName"` 
 
-	ConnectionType		string							`json:"connectionType"`
-	Connection			*models.DatabaseConnection		`json:"connection"`
+	ConnectionType		string							`json:"connectionType"`	// Ex: Postgres, MySQL, Snowflake, etc.
+	Connection			*servicesModels.DatabaseConnection		`json:"connection"`
 }
 
 // Test connection result
@@ -52,6 +65,19 @@ type TestConnectionStepResult struct {
 }
 
 // APIs
+type GetWorkflowEntitiesQuery struct {
+	Limit int	`form:"limit"`
+	Offset int	`form:"offset"`
+}
+
+type GetWorkflowEntityByIdParam struct {
+	ID string	`uri:"id" binding:"required"`
+}
+
+type GetWorkflowEntityByFqnParam struct {
+	FQN string	`uri:"fqn" binding:"required"`
+}
+
 type CreateWorkflowRequest struct {
 	Name				string					`json:"name"`
 

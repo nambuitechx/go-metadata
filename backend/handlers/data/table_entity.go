@@ -4,15 +4,15 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nambuitechx/go-metadata/models/entities"
-	"github.com/nambuitechx/go-metadata/services/entities"
+	dataModels "github.com/nambuitechx/go-metadata/models/data"
+	dataServices "github.com/nambuitechx/go-metadata/services/data"
 )
 
 type TableEntityHandler struct {
-	TableEntityService *services.TableEntityService
+	TableEntityService *dataServices.TableEntityService
 }
 
-func InitTableEntityHandler(e *gin.Engine, tableEntityService *services.TableEntityService) {
+func InitTableEntityHandler(e *gin.Engine, tableEntityService *dataServices.TableEntityService) {
 	// Init handler
 	h := &TableEntityHandler{ TableEntityService: tableEntityService }
 
@@ -35,7 +35,7 @@ func (h *TableEntityHandler) health(ctx *gin.Context) {
 
 func (h *TableEntityHandler) getAllTableEntities(ctx *gin.Context) {
 	// Get query and validate
-	query := &models.GetTableEntitiesQuery{}
+	query := &dataModels.GetTableEntitiesQuery{}
 
 	if err := ctx.ShouldBindQuery(query); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid query", "error": err.Error() })
@@ -59,7 +59,7 @@ func (h *TableEntityHandler) getAllTableEntities(ctx *gin.Context) {
 
 func (h *TableEntityHandler) getTableEntityById(ctx *gin.Context) {
 	// Get param and validate
-	param := &models.GetTableEntityByIdParam{}
+	param := &dataModels.GetTableEntityByIdParam{}
 
 	if err := ctx.ShouldBindUri(param); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })
@@ -78,7 +78,7 @@ func (h *TableEntityHandler) getTableEntityById(ctx *gin.Context) {
 
 func (h *TableEntityHandler) getTableEntityByFqn(ctx *gin.Context) {
 	// Get param and validate
-	param := &models.GetTableEntityByFqnParam{}
+	param := &dataModels.GetTableEntityByFqnParam{}
 
 	if err := ctx.ShouldBindUri(param); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })
@@ -97,7 +97,7 @@ func (h *TableEntityHandler) getTableEntityByFqn(ctx *gin.Context) {
 
 func (h *TableEntityHandler) createTableEntity(ctx *gin.Context) {
 	// Get payload
-	payload := &models.CreateTableEntityPayload{}
+	payload := &dataModels.CreateTableEntityPayload{}
 
 	if err := ctx.ShouldBindJSON(payload); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid payload", "error": err.Error() })
@@ -117,7 +117,7 @@ func (h *TableEntityHandler) createTableEntity(ctx *gin.Context) {
 
 func (h *TableEntityHandler) deleteTableEntityById(ctx *gin.Context) {
 	// Get param and validate
-	param := &models.GetTableEntityByIdParam{}
+	param := &dataModels.GetTableEntityByIdParam{}
 
 	if err := ctx.ShouldBindUri(param); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })
@@ -136,7 +136,7 @@ func (h *TableEntityHandler) deleteTableEntityById(ctx *gin.Context) {
 
 func (h *TableEntityHandler) deleteTableEntityByFqn(ctx *gin.Context) {
 	// Get param and validate
-	param := &models.GetTableEntityByFqnParam{}
+	param := &dataModels.GetTableEntityByFqnParam{}
 
 	if err := ctx.ShouldBindUri(param); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })

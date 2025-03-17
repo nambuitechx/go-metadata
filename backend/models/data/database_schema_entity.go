@@ -4,6 +4,8 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
+
+	typeModels "github.com/nambuitechx/go-metadata/models/type"
 )
 
 // Database schema entity
@@ -19,18 +21,18 @@ type DatabaseSchemaEntity struct {
 
 // Database schema
 type DatabaseSchema struct {
-	ID					string				`json:"id"`
-	Name				string				`json:"name"`
-	FullyQualifiedName	string				`json:"fullyQualifiedName"`
+	ID					string						`json:"id"`
+	Name				string						`json:"name"`
+	FullyQualifiedName	string						`json:"fullyQualifiedName"`
 	
-	DisplayName			string				`json:"displayName"`
-	Description			string				`json:"description"`
+	DisplayName			string						`json:"displayName"`
+	Description			string						`json:"description"`
 
-	ServiceType			string				`json:"serviceType"`
-	Service				*EntityReference	`json:"service"`
-	Database			*EntityReference	`json:"database"`
+	ServiceType			string						`json:"serviceType"`
+	Service				*typeModels.EntityReference	`json:"service"`
+	Database			*typeModels.EntityReference	`json:"database"`
 
-	Deleted				bool				`json:"deleted"`
+	Deleted				bool						`json:"deleted"`
 }
 
 func (s DatabaseSchema) Value() (driver.Value, error) {
@@ -47,8 +49,8 @@ func (s *DatabaseSchema) Scan(value interface{}) error {
 	return json.Unmarshal(val, &s)
 }
 
-func (s *DatabaseSchema) ToEntityReference() *EntityReference {
-	entityRef := &EntityReference{
+func (s *DatabaseSchema) ToEntityReference() *typeModels.EntityReference {
+	entityRef := &typeModels.EntityReference{
 		ID: s.ID,
 		Type: "databaseSchema",
 		Name: s.Name,

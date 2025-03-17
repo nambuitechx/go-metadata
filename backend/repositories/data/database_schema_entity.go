@@ -2,7 +2,7 @@ package repositories
 
 import (
 	"github.com/jmoiron/sqlx"
-	"github.com/nambuitechx/go-metadata/models/entities"
+	dataModels "github.com/nambuitechx/go-metadata/models/data"
 )
 
 type DatabaseSchemaEntityRepository struct {
@@ -13,8 +13,8 @@ func NewDatabaseSchemaEntityRepository(db *sqlx.DB) *DatabaseSchemaEntityReposit
 	return &DatabaseSchemaEntityRepository{ DB: db }
 }
 
-func (r *DatabaseSchemaEntityRepository) SelectDatabaseSchemaEntities(limit int, offset int) ([]models.DatabaseSchemaEntity, error) {
-	databaseSchemaEntities := []models.DatabaseSchemaEntity{}
+func (r *DatabaseSchemaEntityRepository) SelectDatabaseSchemaEntities(limit int, offset int) ([]dataModels.DatabaseSchemaEntity, error) {
+	databaseSchemaEntities := []dataModels.DatabaseSchemaEntity{}
 	var err error
 	
 	if limit < 0 {
@@ -28,25 +28,46 @@ func (r *DatabaseSchemaEntityRepository) SelectDatabaseSchemaEntities(limit int,
 	return databaseSchemaEntities, err
 }
 
-func (r *DatabaseSchemaEntityRepository) SelectDatabaseSchemaEntityById(id string) (*models.DatabaseSchemaEntity, error) {
-	databaseSchemaEntity := &models.DatabaseSchemaEntity{}
+func (r *DatabaseSchemaEntityRepository) SelectDatabaseSchemaEntityById(id string) (*dataModels.DatabaseSchemaEntity, error) {
+	databaseSchemaEntity := &dataModels.DatabaseSchemaEntity{}
 	statement := "SELECT * FROM database_schema_entity WHERE id = $1"
 	err := r.DB.Get(databaseSchemaEntity, statement, id)
 	return databaseSchemaEntity, err
 }
 
-func (r *DatabaseSchemaEntityRepository) SelectDatabaseSchemaEntityByFqn(fqn string) (*models.DatabaseSchemaEntity, error) {
-	databaseSchemaEntity := &models.DatabaseSchemaEntity{}
+func (r *DatabaseSchemaEntityRepository) SelectDatabaseSchemaEntityByFqn(fqn string) (*dataModels.DatabaseSchemaEntity, error) {
+	databaseSchemaEntity := &dataModels.DatabaseSchemaEntity{}
 	statement := "SELECT * FROM database_schema_entity WHERE json->>'fullyQualifiedName' = $1"
 	err := r.DB.Get(databaseSchemaEntity, statement, fqn)
 	return databaseSchemaEntity, err
 }
 
-func (r *DatabaseSchemaEntityRepository) InsertDatabaseSchemaEntity(payload *models.DatabaseSchemaEntity) (*models.DatabaseSchemaEntity, error) {
-	var databaseSchemaEntity = models.DatabaseSchemaEntity{}
+func (r *DatabaseSchemaEntityRepository) InsertDatabaseSchemaEntity(payload *dataModels.DatabaseSchemaEntity) (*dataModels.DatabaseSchemaEntity, error) {
+	var databaseSchemaEntity = dataModels.DatabaseSchemaEntity{}
 	statement := `
 		INSERT INTO database_schema_entity(id, name, json, updatedat, updatedby, deleted, fqnhash)
 		VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING *
+	`
+	err := r.DB.Get(
+		&databaseSchemaEntity,
+		statement,
+		payload.ID,
+		payload.Name,
+		payload.Json,
+		payload.UpdatedAt,
+		payload.UpdatedBy,
+		payload.Deleted,
+		payload.FqnHash,
+	)
+	return &databaseSchemaEntity, err
+}
+
+func (r *DatabaseSchemaEntityRepository) UpdateDatabaseSchemaEntity(payload *dataModels.DatabaseSchemaEntity) (*dataModels.DatabaseSchemaEntity, error) {
+	var databaseSchemaEntity = dataModels.DatabaseSchemaEntity{}
+	statement := `
+		UPDATE database_schema_entity
+		SET name = $2, json = $3, updatedat = $4, updatedby = $5, deleted = $6, fqnhash = $7
+		WHERE id = $1 RETURNING *
 	`
 	err := r.DB.Get(
 		&databaseSchemaEntity,
