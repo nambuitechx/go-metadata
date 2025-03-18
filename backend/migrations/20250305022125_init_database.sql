@@ -59,22 +59,23 @@ CREATE TABLE IF NOT EXISTS bot_entity(
     namehash VARCHAR(256)
 );
 CREATE TABLE IF NOT EXISTS change_event(
+    "offset" INTEGER PRIMARY KEY,
     eventtype VARCHAR(36) NOT NULL,
     entitytype VARCHAR(36) NOT NULL,
     username VARCHAR(256) NOT NULL,
     eventtime BIGINT NOT NULL,
-    json JSONB NOT NULL,
-    offset INTEGER PRIMARY KEY
+    json JSONB NOT NULL
 );
 CREATE TABLE IF NOT EXISTS entity_relationship(
-    fromid VARCHAR(36) PRIMARY KEY,
-    toid VARCHAR(36) PRIMARY KEY,
+    fromid VARCHAR(36) NOT NULL,
+    toid VARCHAR(36) NOT NULL,
     fromentity VARCHAR(256) NOT NULL,
     toentity VARCHAR(256) NOT NULL,
     relation SMALLINT NOT NULL,
     jsonschema VARCHAR(256),
     json JSONB,
-    deleted BOOLEAN NOT NULL
+    deleted BOOLEAN NOT NULL,
+    PRIMARY KEY (fromid, toid, relation)
 );
 CREATE TABLE IF NOT EXISTS ingestion_pipeline_entity(
     id VARCHAR(36) PRIMARY KEY,
@@ -107,6 +108,16 @@ CREATE TABLE IF NOT EXISTS pipeline_service_entity(
     deleted BOOLEAN NOT NULL,
     namehash VARCHAR(256)
 );
+CREATE TABLE IF NOT EXISTS test_connection_definition(
+    id VARCHAR(36) PRIMARY KEY,
+    name VARCHAR(256) UNIQUE NOT NULL,
+    fullyqualifiedname VARCHAR(256) NOT NULL,
+    json JSONB NOT NULL,
+    updatedat BIGINT NOT NULL,
+    updatedby VARCHAR(256),
+    deleted BOOLEAN NOT NULL,
+    namehash VARCHAR(256)
+);
 -- +goose StatementEnd
 
 -- +goose Down
@@ -123,4 +134,5 @@ DROP TABLE IF EXISTS entity_relationship;
 DROP TABLE IF EXISTS ingestion_pipeline_entity;
 DROP TABLE IF EXISTS pipeline_entity;
 DROP TABLE IF EXISTS pipeline_service_entity;
+DROP TABLE IF EXISTS test_connection_definition;
 -- +goose StatementEnd

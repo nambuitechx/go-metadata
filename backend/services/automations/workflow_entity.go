@@ -8,8 +8,8 @@ import (
 
 	"database/sql"
 
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
+	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/jackc/pgx/stdlib"
 
 	automationsModels "github.com/nambuitechx/go-metadata/models/automations"

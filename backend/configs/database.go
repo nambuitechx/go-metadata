@@ -30,7 +30,7 @@ func NewDatabaseConnection(settings *Settings) *DatabaseConnection {
     if err != nil {
         log.Fatalln(err)
     } else {
-		log.Println("Database connected")
+		log.Println("========== ***** Database connected ***** ==========")
 	}
 
 	databaseConnection.DB = db

@@ -1,6 +1,10 @@
 package models
 
 import (
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
+
 	servicesModels "github.com/nambuitechx/go-metadata/models/services"
 )
 
@@ -17,6 +21,7 @@ type WorkflowEntity struct {
 	NameHash			string				`db:"namehash" json:"nameHash"`
 }
 
+// Workflow
 type Workflow struct {
 	ID						string					`json:"id"`
 	Name					string					`json:"name"`
@@ -34,16 +39,30 @@ type Workflow struct {
 	Deleted					bool					`json:"deleted"`
 }
 
+func (s Workflow) Value() (driver.Value, error) {
+	return json.Marshal(s)
+}
+
+func (s *Workflow) Scan(value interface{}) error {
+	val, ok := value.([]byte)
+
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+
+	return json.Unmarshal(val, &s)
+}
+
 // Type and status
 var WorkflowType = map[string]int {"TEST_CONNECTION": 0}
 var WorkflowStatus = map[string]int {"Pending": 0, "Successful": 1, "Failed": 2, "Running": 3}
 
 // Test service connection request
 type TestServiceConnection struct {
-	ServiceType			string							`json:"serviceType"`	// Ex: Database, Dashboard, Messaging, etc.
-	ServiceName			string							`json:"serviceName"` 
+	ServiceType			string									`json:"serviceType"`	// Ex: Database, Dashboard, Messaging, etc.
+	ServiceName			string									`json:"serviceName"` 
 
-	ConnectionType		string							`json:"connectionType"`	// Ex: Postgres, MySQL, Snowflake, etc.
+	ConnectionType		string									`json:"connectionType"`	// Ex: Postgres, MySQL, Snowflake, etc.
 	Connection			*servicesModels.DatabaseConnection		`json:"connection"`
 }
 
