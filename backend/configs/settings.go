@@ -17,6 +17,10 @@ type Settings struct {
 	DatabaseName string
 	DatabaseUser string
 	DatabasePassword string
+
+	SystemVersion string
+	SystemRevision string
+	SystemTimestamp int
 }
 
 func NewSettings() *Settings {
@@ -86,6 +90,32 @@ func NewSettings() *Settings {
 		settings.DatabasePassword = databasePassword
 	} else {
 		settings.DatabasePassword = "admin"
+	}
+
+	// System
+	version, ok := os.LookupEnv("VERSION")
+	if ok {
+		settings.SystemVersion = version
+	} else {
+		settings.SystemVersion = "1.6.5"
+	}
+
+	revision, ok := os.LookupEnv("REVISION")
+	if ok {
+		settings.SystemRevision = revision
+	} else {
+		settings.SystemRevision = "c34abd832f2fd7acc08c9a8e833181587703f0f2"
+	}
+
+	timestamp, ok := os.LookupEnv("TIMESTAMP")
+	if ok {
+		timestamp, err := strconv.ParseInt(timestamp, 10, 64)
+		if err != nil {
+			log.Fatal("Invalid system timestamp")
+		}
+		settings.SystemTimestamp = int(timestamp)
+	} else {
+		settings.SystemTimestamp = 1740754501563
 	}
 
 	return settings

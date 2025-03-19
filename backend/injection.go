@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/nambuitechx/go-metadata/configs"
 	
+	systemHandlers "github.com/nambuitechx/go-metadata/handlers/system"
 	servicesHandlers "github.com/nambuitechx/go-metadata/handlers/services"
 	dataHandlers "github.com/nambuitechx/go-metadata/handlers/data"
 	automationsHandlers "github.com/nambuitechx/go-metadata/handlers/automations"
@@ -54,6 +55,7 @@ func getEngine() *gin.Engine {
 
 	// Routes
 	engine.GET("/health", checkHealth)
+	systemHandlers.InitDBServiceEntityHandler(engine, settings)
 	servicesHandlers.InitTestConnectionDefinitionEntityHandler(engine, testConnectionDefinitionEntityService)
 	servicesHandlers.InitDBServiceEntityHandler(engine, dbserviceEntityService)
 	dataHandlers.InitDatabaseEntityHandler(engine, databaseEntityService)

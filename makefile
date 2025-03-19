@@ -1,22 +1,29 @@
-IMAGE_POSTGRES = go-metadata/postgres
-IMAGE_BACKEND = go-metadata/backend
+POSTGRES_IMAGE = go-metadata/postgres
+BACKEND_IMAGE = go-metadata/backend
+METADATA_INGESTION_IMAGE = go-metadata/metadata-ingestion
 
 build-postgres:
-	docker build -t $(IMAGE_POSTGRES) ./postgres
+	docker build -t $(POSTGRES_IMAGE) ./postgres
 
 build-backend:
-	docker build -t ${IMAGE_BACKEND} ./backend
+	docker build -t ${BACKEND_IMAGE} ./backend
+
+build-metadata-ingestion:
+	docker build -t ${METADATA_INGESTION_IMAGE} ./metadata-ingestion
 
 
-build: build-postgres build-backend
+build: build-postgres build-backend build-metadata-ingestion
 
 run:
-	docker compose up -d -V
+	docker compose up -V
 
 up_postgres:
 	docker compose up postgres -d -V
 
-up: up_postgres
+up_metadata_ingestion:
+	docker compose up metadata-ingestion -d -V
+
+up: up_postgres up_metadata_ingestion
 
 down:
 	docker compose down

@@ -44,15 +44,21 @@ func (h *TestConnectionDefinitionEntityHandler) getAllTestConnectionDefinitionEn
 		query.Limit = 10
 	}
 
-	// Get dbservice entites
-	dbserviceEntities, err := h.TestConnectionDefinitionEntityService.GetAllTestConnectionDefinitionEntities(query.Limit, query.Offset)
+	// Get test connection definition entites
+	testConnectionDefinitionEntities, err := h.TestConnectionDefinitionEntityService.GetAllTestConnectionDefinitionEntities(query.Limit, query.Offset)
 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Get all dbservices failed", "error": err.Error() })
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Get all test connection definition failed", "error": err.Error() })
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Get all dbservices successfully", "data": dbserviceEntities })
+	jsonValues := []*servicesModels.TestConnectionDefinition{}
+	
+	for _, e := range testConnectionDefinitionEntities {
+		jsonValues = append(jsonValues, e.Json)
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{ "message": "Get all test connection definition successfully", "data": jsonValues })
 }
 
 func (h *TestConnectionDefinitionEntityHandler) getTestConnectionDefinitionEntityById(ctx *gin.Context) {
@@ -64,14 +70,14 @@ func (h *TestConnectionDefinitionEntityHandler) getTestConnectionDefinitionEntit
 		return
 	}
 
-	dbserviceEntity, err := h.TestConnectionDefinitionEntityService.GetTestConnectionDefinitionEntityById(param.ID)
+	testConnectionDefinitionEntity, err := h.TestConnectionDefinitionEntityService.GetTestConnectionDefinitionEntityById(param.ID)
 	
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{ "message": "TestConnectionDefinition not found", "error": err.Error() })
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Get dbservice by id successfully", "data": dbserviceEntity })
+	ctx.JSON(http.StatusOK, testConnectionDefinitionEntity.Json)
 }
 
 func (h *TestConnectionDefinitionEntityHandler) getTestConnectionDefinitionEntityByFqn(ctx *gin.Context) {
@@ -83,12 +89,12 @@ func (h *TestConnectionDefinitionEntityHandler) getTestConnectionDefinitionEntit
 		return
 	}
 
-	dbserviceEntity, err := h.TestConnectionDefinitionEntityService.GetTestConnectionDefinitionEntityByFqn(param.FQN)
+	testConnectionDefinitionEntity, err := h.TestConnectionDefinitionEntityService.GetTestConnectionDefinitionEntityByFqn(param.FQN)
 	
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{ "message": "TestConnectionDefinition not found", "error": err.Error() })
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Get dbservice by fqn successfully", "data": dbserviceEntity })
+	ctx.JSON(http.StatusOK, testConnectionDefinitionEntity.Json )
 }
