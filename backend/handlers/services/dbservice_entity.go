@@ -24,6 +24,7 @@ func InitDBServiceEntityHandler(e *gin.Engine, dbserviceEntityService *servicesS
 		g.GET("/name/:fqn", h.getDBServiceEntityByFqn)
 		g.GET("", h.getAllDBServiceEntities)
 		g.POST("", h.createDBServiceEntity)
+		g.PUT("/:id/testConnectionResult", h.updateTestConnectionResult)
 		g.DELETE("/:id", h.deleteDBServiceEntityById)
 		g.DELETE("/name/:fqn", h.deleteDBServiceEntityByFqn)
 	}
@@ -73,7 +74,7 @@ func (h *DBServiceEntityHandler) getDBServiceEntityById(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Get dbservice by id successfully", "data": dbserviceEntity })
+	ctx.JSON(http.StatusOK, dbserviceEntity.Json)
 }
 
 func (h *DBServiceEntityHandler) getDBServiceEntityByFqn(ctx *gin.Context) {
@@ -92,7 +93,7 @@ func (h *DBServiceEntityHandler) getDBServiceEntityByFqn(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Get dbservice by fqn successfully", "data": dbserviceEntity })
+	ctx.JSON(http.StatusOK, dbserviceEntity.Json)
 }
 
 func (h *DBServiceEntityHandler) createDBServiceEntity(ctx *gin.Context) {
@@ -119,6 +120,41 @@ func (h *DBServiceEntityHandler) createDBServiceEntity(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusCreated, gin.H{ "message": "Create dbservice successfully", "data": dbserviceEntity })
+}
+
+func (h *DBServiceEntityHandler) updateTestConnectionResult(ctx *gin.Context) {
+	// Get param and validate
+	param := &servicesModels.GetDBServiceEntityByIdParam{}
+
+	if err := ctx.ShouldBindUri(param); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })
+		return
+	}
+
+	// Get payload
+	payload := &servicesModels.TestConnectionResult{}
+
+	if err := ctx.ShouldBindJSON(payload); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid payload", "error": err.Error() })
+		return
+	}
+
+	dbserviceEntity, err := h.DBServiceEntityService.GetDBServiceEntityById(param.ID)
+
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{ "message": "DBService not found", "error": err.Error() })
+		return
+	}
+
+	dbserviceEntity.Json.TestConnectionResult = payload
+	updatedDBServiceEntity, err := h.DBServiceEntityService.DBServiceEntityRepository.UpdateDBServiceEntity(dbserviceEntity)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{ "message": "Failed to update test connection status for dbservice", "error": err.Error() })
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, updatedDBServiceEntity.Json)
 }
 
 func (h *DBServiceEntityHandler) deleteDBServiceEntityById(ctx *gin.Context) {

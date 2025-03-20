@@ -2,18 +2,12 @@ package services
 
 import (
 	"encoding/json"
-	"fmt"
-	"strings"
 	"time"
 
-	"database/sql"
-
+	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/google/uuid"
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/jackc/pgx/stdlib"
-
 	automationsModels "github.com/nambuitechx/go-metadata/models/automations"
-	servicesModels "github.com/nambuitechx/go-metadata/models/services"
+	baseModels "github.com/nambuitechx/go-metadata/models/base"
 	automationsRepositories "github.com/nambuitechx/go-metadata/repositories/automations"
 )
 
@@ -75,132 +69,192 @@ func (s *WorkflowEntityService) CreateWorkflowEntity(payload *automationsModels.
 	return workflowEntity, err
 }
 
-func (s *WorkflowEntityService) DeleteDatabaseEntityById(id string) error {
+func (s *WorkflowEntityService) UpdateWorkflowEntity(exist *automationsModels.WorkflowEntity) (*automationsModels.WorkflowEntity, error) {
+	entity, err := s.WorkflowEntityRepository.UpdateWorkflowEntity(exist)
+	return entity, err
+}
+
+func (s *WorkflowEntityService) PatchWorkflowEntity(exist *automationsModels.WorkflowEntity, payload []baseModels.JsonPatchOperation) (*automationsModels.WorkflowEntity, error) {
+	// Prepare patch
+	jsonPatch, jsonPatchErr := json.Marshal(payload)
+
+	if jsonPatchErr != nil {
+		return nil, jsonPatchErr
+	}
+
+	patch, patchErr := jsonpatch.DecodePatch(jsonPatch)
+
+	if patchErr != nil {
+		return nil, patchErr
+	}
+
+	workflowEntityJson, workflowEntityJsonErr := json.Marshal(exist.Json)
+
+	if workflowEntityJsonErr != nil {
+		return nil, workflowEntityJsonErr
+	}
+
+	// Apply patch
+	modified, modifiedErr := patch.Apply(workflowEntityJson)
+
+	if modifiedErr != nil {
+		return nil, modifiedErr
+	}
+
+	var modifiedWorkflow automationsModels.Workflow
+
+	unmarshalModifiedWorkflowErr := json.Unmarshal(modified, &modifiedWorkflow)
+
+	if unmarshalModifiedWorkflowErr != nil {
+		return nil, unmarshalModifiedWorkflowErr
+	}
+
+	// Update
+	exist.WorkflowType = modifiedWorkflow.WorkflowType
+	exist.Status = modifiedWorkflow.Status
+	exist.Json = &modifiedWorkflow
+
+	updatedWorkflowEntity, updatedWorkflowEntityErr := s.WorkflowEntityRepository.UpdateWorkflowEntity(exist)
+
+	if updatedWorkflowEntityErr != nil {
+		return nil, updatedWorkflowEntityErr
+	}
+
+	return updatedWorkflowEntity, nil
+}
+
+func (s *WorkflowEntityService) DeleteWorkflowEntityById(id string) error {
 	err := s.WorkflowEntityRepository.DeleteWorkflowEntityById(id)
 	return err
 }
 
-func (s *WorkflowEntityService) DeleteDatabaseEntityByFqn(fqn string) error {
+func (s *WorkflowEntityService) DeleteWorkflowEntityByFqn(fqn string) error {
 	err := s.WorkflowEntityRepository.DeleteWorkflowEntityByFqn(fqn)
 	return err
 }
 
-func TestConnection(testServiceConnection *automationsModels.TestServiceConnection) bool {
-	connection := testServiceConnection.Connection
 
-	idx, serviceTypeErr := servicesModels.ValidateServiceType(testServiceConnection.ConnectionType)
+/*
+ *
+ *	Test connection section
+ *
+ */ 
+// func TestConnection(testServiceConnection *automationsModels.TestServiceConnection) bool {
+// 	connection := testServiceConnection.Connection
 
-	if serviceTypeErr != nil {
-		return false
-	}
+// 	idx, serviceTypeErr := servicesModels.ValidateServiceType(testServiceConnection.ConnectionType)
 
-	if idx == 0 {
-		return TestPostgresConnection(connection.Config)
-	} else if idx == 1 {
-		return TestMysqlConnection(connection.Config)
-	} else {
-		return false
-	}
-}
+// 	if serviceTypeErr != nil {
+// 		return false
+// 	}
 
-func TestPostgresConnection(conn interface{}) bool {
-	bytes, err := json.Marshal(conn)
+// 	if idx == 0 {
+// 		return TestPostgresConnection(connection.Config)
+// 	} else if idx == 1 {
+// 		return TestMysqlConnection(connection.Config)
+// 	} else {
+// 		return false
+// 	}
+// }
 
-	if err != nil {
-		return false
-	}
+// func TestPostgresConnection(conn interface{}) bool {
+// 	bytes, err := json.Marshal(conn)
 
-	var c *servicesModels.PostgresConnection = &servicesModels.PostgresConnection{}
+// 	if err != nil {
+// 		return false
+// 	}
 
-	if err := json.Unmarshal(bytes, c); err != nil {
-		return false
-	}
+// 	var c *servicesModels.PostgresConnection = &servicesModels.PostgresConnection{}
 
-	hostPort := strings.Split(c.HostPort, ":")
+// 	if err := json.Unmarshal(bytes, c); err != nil {
+// 		return false
+// 	}
 
-	if len(hostPort) < 2 {
-		return false
-	}
+// 	hostPort := strings.Split(c.HostPort, ":")
 
-	host := hostPort[0]
-	port := hostPort[1]
-	user := c.Username
-	password := c.AuthType["password"]
-	dbName := c.Database
+// 	if len(hostPort) < 2 {
+// 		return false
+// 	}
 
-	db, err := sql.Open(
-		"pgx",
-		fmt.Sprintf(
-			"postgres://%v:%v@%v:%v/%v",
-			user,
-			password,
-			host,
-			port,
-			dbName,
-		),
-	)
+// 	host := hostPort[0]
+// 	port := hostPort[1]
+// 	user := c.Username
+// 	password := c.AuthType["password"]
+// 	dbName := c.Database
 
-    if err != nil {
-        return false
-    }
+// 	db, err := sql.Open(
+// 		"pgx",
+// 		fmt.Sprintf(
+// 			"postgres://%v:%v@%v:%v/%v",
+// 			user,
+// 			password,
+// 			host,
+// 			port,
+// 			dbName,
+// 		),
+// 	)
 
-	pingErr := db.Ping()
+//     if err != nil {
+//         return false
+//     }
 
-	if pingErr != nil {
-        return false
-    }
+// 	pingErr := db.Ping()
 
-	closeErr := db.Close()
-	return closeErr == nil
-}
+// 	if pingErr != nil {
+//         return false
+//     }
 
-func TestMysqlConnection(conn interface{}) bool {
-	bytes, err := json.Marshal(conn)
+// 	closeErr := db.Close()
+// 	return closeErr == nil
+// }
+
+// func TestMysqlConnection(conn interface{}) bool {
+// 	bytes, err := json.Marshal(conn)
 	
-	if err != nil {
-		return false
-	}
+// 	if err != nil {
+// 		return false
+// 	}
 
-	var c *servicesModels.MysqlConnection = &servicesModels.MysqlConnection{}
+// 	var c *servicesModels.MysqlConnection = &servicesModels.MysqlConnection{}
 
-	if err := json.Unmarshal(bytes, c); err != nil {
-		return false
-	}
+// 	if err := json.Unmarshal(bytes, c); err != nil {
+// 		return false
+// 	}
 
-	hostPort := strings.Split(c.HostPort, ":")
+// 	hostPort := strings.Split(c.HostPort, ":")
 
-	if len(hostPort) < 2 {
-		return false
-	}
+// 	if len(hostPort) < 2 {
+// 		return false
+// 	}
 
-	host := hostPort[0]
-	port := hostPort[1]
-	user := c.Username
-	password := c.AuthType["password"]
-	dbName := c.DatabaseName
+// 	host := hostPort[0]
+// 	port := hostPort[1]
+// 	user := c.Username
+// 	password := c.AuthType["password"]
+// 	dbName := c.DatabaseName
 
-	db, err := sql.Open(
-		"mysql",
-		fmt.Sprintf(
-			"mysql://%v:%v@%v:%v/%v",
-			user,
-			password,
-			host,
-			port,
-			dbName,
-		),
-	)
+// 	db, err := sql.Open(
+// 		"mysql",
+// 		fmt.Sprintf(
+// 			"mysql://%v:%v@%v:%v/%v",
+// 			user,
+// 			password,
+// 			host,
+// 			port,
+// 			dbName,
+// 		),
+// 	)
 
-    if err != nil {
-        return false
-    }
+//     if err != nil {
+//         return false
+//     }
 
-	pingErr := db.Ping()
+// 	pingErr := db.Ping()
 
-	if pingErr != nil {
-        return false
-    } 
+// 	if pingErr != nil {
+//         return false
+//     } 
 
-	closeErr := db.Close()
-	return closeErr == nil
-}
+// 	closeErr := db.Close()
+// 	return closeErr == nil
+// }

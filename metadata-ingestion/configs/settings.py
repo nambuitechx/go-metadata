@@ -12,11 +12,12 @@ class Settings(BaseSettings):
     
     
     # Database connection information
-    DB_NAME: str = ""
-    DB_HOST: str = ""
-    DB_PORT: str = ""
-    DB_USER: str = ""
-    DB_PASSWORD: str = ""
+    
+    DATABASE_HOST: str
+    DATABASE_PORT: str
+    DATABASE_NAME: str
+    DATABASE_USER: str
+    DATABASE_PASSWORD: str
     
     BACKEND_URL: str = "http://backend:8585/api"
     

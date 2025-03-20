@@ -23,17 +23,19 @@ type DBServiceEntity struct {
 
 // Database service
 type DBService struct {
-	ID					string				`json:"id"`
-	Name				string				`json:"name"`
-	FullyQualifiedName	string				`json:"fullyQualifiedName"`
+	ID						string					`json:"id"`
+	Name					string					`json:"name"`
+	FullyQualifiedName		string					`json:"fullyQualifiedName"`
 	
-	DisplayName			string				`json:"displayName"`
-	Description			string				`json:"description"`
+	DisplayName				string					`json:"displayName"`
+	Description				string					`json:"description"`
 
-	ServiceType			string				`json:"serviceType"`			
-	Connection			*DatabaseConnection	`json:"connection"`
+	ServiceType				string					`json:"serviceType"`			
+	Connection				*DatabaseConnection		`json:"connection"`
 
-	Deleted				bool				`json:"deleted"`
+	TestConnectionResult	*TestConnectionResult	`json:"testConnectionResult"`
+
+	Deleted					bool					`json:"deleted"`
 }
 
 func (s DBService) Value() (driver.Value, error) {
@@ -192,6 +194,23 @@ func ValidateMysqlConnection(conn interface{}) error {
 	}
 
 	return c.SelfValidate()
+}
+
+// Test connection result
+type TestConnectionResult struct {
+	LastUpdatedAt		string							`json:"lastUpdatedAt"`
+	Status				string							`json:"status"`
+	Steps				[]*TestConnectionStepResult		`json:"steps"`
+}
+
+var StatusType = map[string]int {"Successful": 0, "Failed": 1, "Running": 2}
+
+type TestConnectionStepResult struct {
+	Name				string		`json:"name"`
+	Mandatory			bool		`json:"mandatory"`
+	Passed				bool		`json:"passed"`
+	Message				string		`json:"message"`
+	ErrorLog			string		`json:"errorLog"`
 }
 
 // APIs

@@ -23,20 +23,20 @@ type WorkflowEntity struct {
 
 // Workflow
 type Workflow struct {
-	ID						string					`json:"id"`
-	Name					string					`json:"name"`
-	FullyQualifiedName		string					`json:"fullyQualifiedName"`
+	ID						string									`json:"id"`
+	Name					string									`json:"name"`
+	FullyQualifiedName		string									`json:"fullyQualifiedName"`
 
-	DisplayName				string					`json:"displayName"`
-	Description				string					`json:"description"`
+	DisplayName				string									`json:"displayName"`
+	Description				string									`json:"description"`
 
-	WorkflowType			string					`json:"workflowType"`
-	Status					string					`json:"status"`
+	WorkflowType			string									`json:"workflowType"`
+	Status					string									`json:"status"`
 
-	Request					*TestServiceConnection	`json:"request"`
-	Response				*TestConnectionResult	`json:"response"`
+	Request					*TestServiceConnection					`json:"request"`
+	Response				*servicesModels.TestConnectionResult	`json:"response"`
 
-	Deleted					bool					`json:"deleted"`
+	Deleted					bool									`json:"deleted"`
 }
 
 func (s Workflow) Value() (driver.Value, error) {
@@ -66,23 +66,6 @@ type TestServiceConnection struct {
 	Connection			*servicesModels.DatabaseConnection		`json:"connection"`
 }
 
-// Test connection result
-type TestConnectionResult struct {
-	LastUpdatedAt		string							`json:"lastUpdatedAt"`
-	Status				string							`json:"status"`
-	Steps				[]*TestConnectionStepResult		`json:"steps"`
-}
-
-var StatusType = map[string]int {"Successful": 0, "Failed": 1, "Running": 2}
-
-type TestConnectionStepResult struct {
-	Name				string		`json:"name"`
-	Mandatory			bool		`json:"mandatory"`
-	Passed				bool		`json:"passed"`
-	Message				string		`json:"message"`
-	ErrorLog			string		`json:"errorLog"`
-}
-
 // APIs
 type GetWorkflowEntitiesQuery struct {
 	Limit int	`form:"limit"`
@@ -98,14 +81,22 @@ type GetWorkflowEntityByFqnParam struct {
 }
 
 type CreateWorkflowRequest struct {
-	Name				string					`json:"name"`
+	Name				string									`json:"name"`
 
-	DisplayName			string					`json:"displayName"`
-	Description			string					`json:"description"`
+	DisplayName			string									`json:"displayName"`
+	Description			string									`json:"description"`
 
-	WorkflowType		string					`json:"workflowType"`
-	Status				string					`json:"status"`
+	WorkflowType		string									`json:"workflowType"`
+	Status				string									`json:"status"`
 
-	Request				*TestServiceConnection	`json:"request"`
-	Response			*TestConnectionResult	`json:"response"`
+	Request				*TestServiceConnection					`json:"request"`
+	Response			*servicesModels.TestConnectionResult	`json:"response"`
+}
+
+type PatchWorkflowRequest struct {
+	DisplayName			*string									`json:"displayName"`
+	Description			*string									`json:"description"`
+	Status				*string									`json:"status"`
+	Request				*TestServiceConnection					`json:"request"`
+	Response			*servicesModels.TestConnectionResult	`json:"response"`
 }

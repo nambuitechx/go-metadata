@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	automationsModels "github.com/nambuitechx/go-metadata/models/automations"
+	baseModels "github.com/nambuitechx/go-metadata/models/base"
 	automationsServices "github.com/nambuitechx/go-metadata/services/automations"
 )
 
@@ -25,6 +26,8 @@ func InitWorkflowEntityHandler(e *gin.Engine, workflowEntityService *automations
 		g.GET("", h.getAllWorkflowEntities)
 		g.POST("", h.createWorkflowEntity)
 		g.POST("/trigger/:id", h.triggerWorkflowById)
+		g.PATCH("/:id", h.patchWorkflowById)
+		g.PATCH("/name/:fqn", h.patchWorkflowByFqn)
 		g.DELETE("/:id", h.deleteWorkflowEntityById)
 		g.DELETE("/name/:fqn", h.deleteWorkflowEntityByFqn)
 	}
@@ -55,7 +58,13 @@ func (h *WorkflowEntityHandler) getAllWorkflowEntities(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Get all workflow successfully", "data": workflowEntities })
+	jsonValues := []*automationsModels.Workflow{}
+	
+	for _, e := range workflowEntities {
+		jsonValues = append(jsonValues, e.Json)
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{ "message": "Get all workflow successfully", "data": jsonValues })
 }
 
 func (h *WorkflowEntityHandler) getWorkflowEntityById(ctx *gin.Context) {
@@ -74,7 +83,7 @@ func (h *WorkflowEntityHandler) getWorkflowEntityById(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Get workflow by id successfully", "data": workflowEntity })
+	ctx.JSON(http.StatusOK, workflowEntity.Json)
 }
 
 func (h *WorkflowEntityHandler) getWorkflowEntityByFqn(ctx *gin.Context) {
@@ -93,7 +102,7 @@ func (h *WorkflowEntityHandler) getWorkflowEntityByFqn(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Get workflow by fqn successfully", "data": workflowEntity })
+	ctx.JSON(http.StatusOK, workflowEntity.Json)
 }
 
 func (h *WorkflowEntityHandler) createWorkflowEntity(ctx *gin.Context) {
@@ -113,10 +122,29 @@ func (h *WorkflowEntityHandler) createWorkflowEntity(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{ "message": "Create workflow successfully", "data": workflowEntity })
+	ctx.JSON(http.StatusCreated, gin.H{ "message": "Create workflow successfully", "data": workflowEntity.Json })
 }
 
 func (h *WorkflowEntityHandler) triggerWorkflowById(ctx *gin.Context) {
+	// Get param and validate
+	param := &automationsModels.GetWorkflowEntityByIdParam{}
+
+	if err := ctx.ShouldBindUri(param); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })
+		return
+	}
+
+	_, err := h.WorkflowEntityService.GetWorkflowEntityById(param.ID)
+	
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{ "message": "Workflow not found", "error": err.Error() })
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{ "message": "Trigger workflow by id successfully" })
+}
+
+func (h *WorkflowEntityHandler) patchWorkflowById(ctx *gin.Context) {
 	// Get param and validate
 	param := &automationsModels.GetWorkflowEntityByIdParam{}
 
@@ -132,7 +160,56 @@ func (h *WorkflowEntityHandler) triggerWorkflowById(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{ "message": "Trigger workflow by id successfully", "data": workflowEntity })
+	// Get payload
+	var payload []baseModels.JsonPatchOperation
+
+	if err := ctx.ShouldBindJSON(&payload); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid payload", "error": err.Error() })
+		return
+	}
+
+	updatedWorkflowEntity, updatedWorkflowEntityErr := h.WorkflowEntityService.PatchWorkflowEntity(workflowEntity, payload)
+
+	if updatedWorkflowEntityErr != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Failed to patch workflow by id", "error": updatedWorkflowEntityErr.Error() })
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{ "message": "Patch workflow by id successfully", "data": updatedWorkflowEntity.Json })
+}
+
+func (h *WorkflowEntityHandler) patchWorkflowByFqn(ctx *gin.Context) {
+	// Get param and validate
+	param := &automationsModels.GetWorkflowEntityByFqnParam{}
+
+	if err := ctx.ShouldBindUri(param); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid param", "error": err.Error() })
+		return
+	}
+
+	workflowEntity, err := h.WorkflowEntityService.GetWorkflowEntityByFqn(param.FQN)
+	
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{ "message": "Workflow not found", "error": err.Error() })
+		return
+	}
+
+	// Get payload
+	var payload []baseModels.JsonPatchOperation
+
+	if err := ctx.ShouldBindJSON(&payload); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid payload", "error": err.Error() })
+		return
+	}
+
+	updatedWorkflowEntity, updatedWorkflowEntityErr := h.WorkflowEntityService.PatchWorkflowEntity(workflowEntity, payload)
+
+	if updatedWorkflowEntityErr != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Failed to patch workflow by id", "error": updatedWorkflowEntityErr.Error() })
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{ "message": "Patch workflow by id successfully", "data": updatedWorkflowEntity.Json })
 }
 
 func (h *WorkflowEntityHandler) deleteWorkflowEntityById(ctx *gin.Context) {
@@ -144,7 +221,7 @@ func (h *WorkflowEntityHandler) deleteWorkflowEntityById(ctx *gin.Context) {
 		return
 	}
 
-	err := h.WorkflowEntityService.DeleteDatabaseEntityById(param.ID)
+	err := h.WorkflowEntityService.DeleteWorkflowEntityById(param.ID)
 
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{ "message": "Delete workflow by id failed", "error": err.Error() })
@@ -163,7 +240,7 @@ func (h *WorkflowEntityHandler) deleteWorkflowEntityByFqn(ctx *gin.Context) {
 		return
 	}
 
-	err := h.WorkflowEntityService.DeleteDatabaseEntityByFqn(param.FQN)
+	err := h.WorkflowEntityService.DeleteWorkflowEntityByFqn(param.FQN)
 
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{ "message": "Delete workflow by fqn failed", "error": err.Error() })

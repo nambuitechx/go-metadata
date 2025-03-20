@@ -7,3 +7,8 @@ class TestConnectionPayload(BaseModel):
     requestId: str
     connectionId: Optional[str] = None
     connectionInfo: TestServiceConnectionRequest
+
+class TestConnectionResult(BaseModel):
+    lastUpdatedAt: Optional[int] = None
+    status: Optional[str] = None
+    steps: list = []
