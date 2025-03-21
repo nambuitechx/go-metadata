@@ -6,11 +6,22 @@ from fastapi import HTTPException
 from typing import List
 from datetime import datetime
 
+from metadata.generated.schema.entity.services.connections.metadata.openMetadataConnection import OpenMetadataConnection
+from metadata.generated.schema.entity.services.databaseService import (
+    DatabaseServiceType,
+    DatabaseService,
+)
+from metadata.generated.schema.metadataIngestion.workflow import (
+    OpenMetadataWorkflowConfig,
+    SourceConfig,
+    Source,
+)
+from metadata.generated.schema.metadataIngestion.databaseServiceMetadataPipeline import DatabaseServiceMetadataPipeline
+from metadata.generated.schema.type.filterPattern import FilterPattern
+
+import metadata.ingestion.connections.test_connections
 from metadata.ingestion.source.connections import get_connection, get_test_connection_fn
 from metadata.ingestion.ometa.ometa_api import OpenMetadata
-from metadata.generated.schema.entity.services.connections.metadata.openMetadataConnection import OpenMetadataConnection
-from metadata.generated.schema.entity.services.databaseService import DatabaseService
-import metadata.ingestion.connections.test_connections
 from metadata.ingestion.connections.test_connections import (
     TestConnectionStep,
     # TestConnectionResult,
@@ -18,10 +29,12 @@ from metadata.ingestion.connections.test_connections import (
     StatusType,
     _test_connection_steps_during_ingestion,
 )
+from metadata.workflow.metadata import MetadataWorkflow
 
 from configs.settings import settings
 from configs.logger import get_logger
-from entities.ingestion import TestConnectionPayload, TestConnectionResult
+from configs.constants import INTERNAL_SCHEMA
+from entities.ingestion import TestConnectionPayload, TestConnectionResult, IngestMetadataPayload, IngestionRun, IngestionRunStatus
 
 logger = get_logger(__name__)
 
@@ -34,6 +47,11 @@ def get_db_connection():
         user=settings.DATABASE_USER,
         password=settings.DATABASE_PASSWORD,
     )
+    
+    
+def init_db():
+    init_test_connection_result_db()
+    init_ingestion_run_db()
 
 
 def init_test_connection_result_db():
@@ -42,9 +60,30 @@ def init_test_connection_result_db():
     with conn.cursor() as cursor:
         cursor.execute(
             """
-            CREATE TABLE IF NOT EXISTS test_connection_result (
+            CREATE TABLE IF NOT EXISTS z_test_connection_result (
                 id TEXT PRIMARY KEY,
                 result TEXT NOT NULL
+            );"""
+        )
+        conn.commit()
+    
+    conn.close()
+
+
+def init_ingestion_run_db():
+    conn = get_db_connection()
+    
+    with conn.cursor() as cursor:
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS z_ingestion_run (
+                id TEXT PRIMARY KEY,
+                connection_name TEXT NOT NULL,
+                connection_type TEXT NOT NULL,
+                status TEXT NOT NULL,
+                start_time BIGINT,
+                end_time BIGINT,
+                error_message TEXT
             );"""
         )
         conn.commit()
@@ -56,9 +95,9 @@ def save_test_connection_result(item: dict):
     conn = get_db_connection()
     
     with conn.cursor() as cursor:
-        cursor.execute("DELETE FROM test_connection_result WHERE id = %s", (item["id"],))
+        cursor.execute("DELETE FROM z_test_connection_result WHERE id = %s", (item["id"],))
         cursor.execute(
-            "INSERT INTO test_connection_result (id, result) VALUES (%s, %s) ON CONFLICT (id) DO UPDATE SET result = %s",
+            "INSERT INTO z_test_connection_result (id, result) VALUES (%s, %s) ON CONFLICT (id) DO UPDATE SET result = %s",
             (item["id"], json.dumps(item), json.dumps(item),)
         )
         conn.commit()
@@ -71,14 +110,14 @@ def get_test_connection_result(id: str) -> dict:
     
     with conn.cursor() as cursor:
         cursor.execute(
-            "SELECT result FROM test_connection_result WHERE id = %s", (id,)
+            "SELECT result FROM z_test_connection_result WHERE id = %s", (id,)
         )
         data = cursor.fetchone()
         conn.commit()
         conn.close()
         
         if data == None:
-            raise HTTPException(status_code=404, detail="request not found")
+            raise HTTPException(status_code=404, detail="Test connection result not found")
         
         return json.loads(data[0])
 
@@ -191,10 +230,7 @@ metadata.ingestion.connections.test_connections._test_connection_steps = (
 )
 
 
-def test_connection_via_om(payload: TestConnectionPayload):
-    connection_config = payload.connectionInfo.connection.config
-    test_connection_fn = get_test_connection_fn(connection_config)
-    
+def get_metadata_client():
     metadata = OpenMetadata(
         config=OpenMetadataConnection.model_validate(
             {
@@ -204,11 +240,146 @@ def test_connection_via_om(payload: TestConnectionPayload):
             }
         )
     )
+    return metadata
+
+
+def test_connection_via_om(payload: TestConnectionPayload):
+    connection_config = payload.connectionInfo.connection.config
+    test_connection_fn = get_test_connection_fn(connection_config)
+    
+    metadata_client = get_metadata_client()
     
     if payload.connectionId != None:
-        db_service: DatabaseService = metadata.get_by_id(DatabaseService, payload.connectionId)
+        db_service: DatabaseService = metadata_client.get_by_id(DatabaseService, payload.connectionId)
         connection_config = db_service.connection.config
     
     result = {"id": payload.requestId, "connectionId": payload.connectionId}
     connection = get_connection(connection_config)
-    test_connection_fn(metadata, connection, connection_config, result)
+    test_connection_fn(metadata_client, connection, connection_config, result)
+
+
+def run_metadata_ingestion_for_om(payload: IngestMetadataPayload):
+    connection_name = payload.connectionName
+    client = get_metadata_client()
+    connection: DatabaseService = client.get_by_name(
+        DatabaseService,
+        fqn=connection_name,
+        fields=["tags"],
+    )
+    
+    if connection == None:
+        raise HTTPException(status_code=404, detail="Connection not found")
+    
+    # logger.info(f"========== connection: {connection}")
+    
+    source = Source(
+        type=connection.serviceType.value,
+        serviceName=connection_name,
+        # serviceConnection={
+        #     "config": connection.connection.model_dump()
+        # },
+        sourceConfig=SourceConfig(
+            config=DatabaseServiceMetadataPipeline(
+                useFqnForFiltering=True,
+                markDeletedTables=True,
+                schemaFilterPattern=FilterPattern(
+                    excludes=get_schema_filter_pattern(connection=connection)
+                ),
+            )
+        ),
+    )
+    
+    logger.info(f"========== source: {source}")
+    logger.info(f"========== Running metadata ingestion for {connection_name}")
+    
+    runWorkFlow(source, connection.id.root.__str__())
+
+
+def get_schema_filter_pattern(connection: DatabaseService):
+    schema_fqn_prefix = connection.name.root.__str__() + "." + connection.name.root.__str__() + "."
+    if connection.serviceType == DatabaseServiceType.Postgres:
+        schema_fqn_prefix = connection.name.root.__str__() + "." + connection.connection.config.database + "."
+    if connection.serviceType in INTERNAL_SCHEMA:
+        return [schema_fqn_prefix + e for e in INTERNAL_SCHEMA[connection.serviceType]]
+    else:
+        return []
+
+
+def runWorkFlow(
+    metadata_config: Source,
+    entity_id: str,
+):
+    ingestion_run = IngestionRun(
+        id=entity_id,
+        connection_name=metadata_config.serviceName,
+        connection_type=metadata_config.type,
+        status=IngestionRunStatus.RUNNING.value,
+        start_time=get_now(),
+    )
+    insert_or_update_ingestion_run_status(ingestion_run)
+    
+    try:
+        workflow = MetadataWorkflow(
+            OpenMetadataWorkflowConfig.model_validate(
+                {
+                    "source": metadata_config.model_dump(),
+                    "sink": {"type": "metadata-rest", "config": {}},
+                    "workflowConfig": {
+                        "loggerLevel": "INFO",
+                        "openMetadataServerConfig": {
+                            "hostPort": settings.BACKEND_URL,
+                            "authProvider": "openmetadata",
+                            "securityConfig": {"jwtToken": "token"},
+                        },
+                    },
+                }
+            ),
+        )
+        workflow.execute()
+        workflow.print_status()
+        workflow.raise_from_status()
+        workflow.stop()
+        ingestion_run.status = "SUCCEEDED"
+        ingestion_run.end_time = get_now()
+        insert_or_update_ingestion_run_status(ingestion_run)
+    except Exception as e:
+        ingestion_run.status = "FAILED"
+        ingestion_run.end_time = get_now()
+        ingestion_run.error_message = str(e)
+        insert_or_update_ingestion_run_status(ingestion_run)
+        raise e
+
+
+def get_now():
+    return int(datetime.now().timestamp())
+
+
+def insert_or_update_ingestion_run_status(ingestion_run: IngestionRun):
+    conn = get_db_connection()
+    
+    with conn.cursor() as cursor:
+        cursor.execute(
+            # "UPDATE z_ingestion_run SET status = %s, error_message = %s WHERE id = %s",
+            # (ingestion_run.status, ingestion_run.error_message, ingestion_run.id,)
+            """
+            INSERT INTO z_ingestion_run(id, connection_name, connection_type, status, start_time, end_time, error_message)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (id) DO UPDATE SET status = %s, start_time = %s, end_time = %s, error_message = %s
+            """,
+            (
+                ingestion_run.id,
+                ingestion_run.connection_name,
+                ingestion_run.connection_type,
+                ingestion_run.status,
+                ingestion_run.start_time,
+                ingestion_run.end_time,
+                ingestion_run.error_message,
+                ingestion_run.status,
+                ingestion_run.start_time,
+                ingestion_run.end_time,
+                ingestion_run.error_message,
+            ),
+        )
+        conn.commit()
+    
+    conn.close()

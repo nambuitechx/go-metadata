@@ -6,6 +6,8 @@ import (
 	"errors"
 	"strings"
 
+	baseUtils "github.com/nambuitechx/go-metadata/utils"
+	securityModels "github.com/nambuitechx/go-metadata/models/security"
 	typeModels "github.com/nambuitechx/go-metadata/models/type"
 )
 
@@ -86,25 +88,44 @@ type DatabaseConnection struct {
 
 // Postgres
 type PostgresConnection struct {
-	Type				string						`json:"type"`
-	Scheme				string						`json:"scheme"`
-	Username			string						`json:"username"`
-	AuthType			map[string]interface{}		`json:"authType"`
-	HostPort			string						`json:"hostPort"`
-	Database			string						`json:"database"`
-	IngestAllDatabases	bool						`json:"ingestAllDatabases"`
+	Type						*string						`json:"type"`
+	Scheme						*string						`json:"scheme"`
+	Username					string						`json:"username"`
+	AuthType					map[string]interface{}		`json:"authType"`
+	HostPort					string						`json:"hostPort"`
+	Database					string						`json:"database"`
+	IngestAllDatabases			*bool						`json:"ingestAllDatabases"`
+	SSLMode						*string						`json:"sslMode"`
+	SupportsMetadataExtraction	*bool						`json:"supportsMetadataExtraction"`
+	SupportsUsageExtraction		*bool						`json:"supportsUsageExtraction"`
+	SupportsLineageExtraction	*bool						`json:"supportsLineageExtraction"`
+	SupportsDBTExtraction		*bool						`json:"supportsDBTExtraction"`
+	SupportsProfiler			*bool						`json:"supportsProfiler"`
+	SupportsDatabase			*bool						`json:"supportsDatabase"`
+	SupportsQueryComment		*bool						`json:"supportsQueryComment"`
+	SupportsDataDiff			*bool						`json:"supportsDataDiff"`
 }
 
 var PostgresType = map[string]int {"Postgres": 0}
 var PostgresScheme = map[string]int {"postgresql+psycopg2": 0, "pgspider+psycopg2": 1}
 
 func (c *PostgresConnection) SelfValidate() error {
-	if _, ok := PostgresType[c.Type]; !ok {
-		return errors.New("invalid postgres type")
+	if c.Type == nil {
+		v := "Postgres"
+		c.Type = &v
+	} else {
+		if _, ok := PostgresType[*c.Type]; !ok {
+			return errors.New("invalid postgres type")
+		}
 	}
 
-	if _, ok := PostgresScheme[c.Scheme]; !ok {
-		return errors.New("invalid postgres scheme")
+	if c.Scheme == nil {
+		v := "postgresql+psycopg2"
+		c.Scheme = &v
+	} else {
+		if _, ok := PostgresScheme[*c.Scheme]; !ok {
+			return errors.New("invalid postgres scheme")
+		}
 	}
 
 	if strings.TrimSpace(c.Username) == "" {
@@ -119,11 +140,65 @@ func (c *PostgresConnection) SelfValidate() error {
 		return errors.New("invalid postgres database")
 	}
 
+	if c.IngestAllDatabases == nil {
+		v := false
+		c.IngestAllDatabases = &v
+	}
+
+	if c.SSLMode == nil {
+		v := "disable"
+		c.SSLMode = &v
+	} else {
+		if _, ok := securityModels.SSLMode[*c.SSLMode]; !ok {
+			return errors.New("invalid ssl mode")
+		}
+	}
+
+	if c.SupportsMetadataExtraction == nil {
+		v := true
+		c.SupportsMetadataExtraction = &v
+	}
+
+	if c.SupportsUsageExtraction == nil {
+		v := true
+		c.SupportsUsageExtraction = &v
+	}
+
+	if c.SupportsLineageExtraction == nil {
+		v := true
+		c.SupportsLineageExtraction = &v
+	}
+
+	if c.SupportsDBTExtraction == nil {
+		v := true
+		c.SupportsDBTExtraction = &v
+	}
+
+	if c.SupportsProfiler == nil {
+		v := true
+		c.SupportsProfiler = &v
+	}
+
+	if c.SupportsDatabase == nil {
+		v := true
+		c.SupportsDatabase = &v
+	}
+
+	if c.SupportsQueryComment == nil {
+		v := true
+		c.SupportsQueryComment = &v
+	}
+
+	if c.SupportsDataDiff == nil {
+		v := true
+		c.SupportsDataDiff = &v
+	}
+
 	return nil
 }
 
-func ValidatePostgresConnection(conn interface{}) error {
-	bytes, err := json.Marshal(conn)
+func ValidatePostgresConnection(databaseConnection *DatabaseConnection) error {
+	bytes, err := json.Marshal(databaseConnection.Config)
 
 	if err != nil {
 		return errors.New("failed to marshal postgres connection config")
@@ -135,30 +210,60 @@ func ValidatePostgresConnection(conn interface{}) error {
 		return errors.New("failed to unmarshal to PostgresConnection")
 	}
 
-	return c.SelfValidate()
+	validateErr := c.SelfValidate()
+
+	if validateErr != nil {
+		return validateErr
+	}
+
+	dataFromStruct, dataFromStructErr := baseUtils.StructToMap(c)
+
+	if dataFromStructErr != nil {
+		return dataFromStructErr
+	}
+
+	databaseConnection.Config = dataFromStruct
+	return nil
 }
 
 // Mysql
 type MysqlConnection struct {
-	Type				string					`json:"type"`
-	Scheme				string					`json:"scheme"`
-	Username			string					`json:"username"`
-	AuthType			map[string]interface{}	`json:"authType"`
-	HostPort			string					`json:"hostPort"`
-	DatabaseName		string					`json:"databaseName"`
-	DatabaseSchema		string					`json:"databaseSchema"`
+	Type						*string					`json:"type"`
+	Scheme						*string					`json:"scheme"`
+	Username					string					`json:"username"`
+	AuthType					map[string]interface{}	`json:"authType"`
+	HostPort					string					`json:"hostPort"`
+	DatabaseName				string					`json:"databaseName"`
+	DatabaseSchema				string					`json:"databaseSchema"`
+	SupportsMetadataExtraction	*bool					`json:"supportsMetadataExtraction"`
+	SupportsDBTExtraction		*bool					`json:"supportsDBTExtraction"`
+	SupportsProfiler			*bool					`json:"supportsProfiler"`
+	SupportsQueryComment		*bool					`json:"supportsQueryComment"`
+	SupportsDataDiff			*bool					`json:"supportsDataDiff"`
+	SupportsUsageExtraction		*bool					`json:"supportsUsageExtraction"`
+	SupportsLineageExtraction	*bool					`json:"supportsLineageExtraction"`
 }
 
 var MysqlType = map[string]int {"Mysql": 0}
 var MysqlScheme = map[string]int {"mysql+pymysql": 0}
 
 func (c *MysqlConnection) SelfValidate() error {
-	if _, ok := MysqlType[c.Type]; !ok {
-		return errors.New("invalid mysql type")
+	if c.Type == nil {
+		v := "Mysql"
+		c.Type = &v
+	} else {
+		if _, ok := MysqlType[*c.Type]; !ok {
+			return errors.New("invalid mysql type")
+		}
 	}
 
-	if _, ok := MysqlScheme[c.Scheme]; !ok {
-		return errors.New("invalid mysql scheme")
+	if c.Scheme == nil {
+		v := "mysql+pymysql"
+		c.Scheme = &v
+	} else {
+		if _, ok := MysqlScheme[*c.Scheme]; !ok {
+			return errors.New("invalid mysql scheme")
+		}
 	}
 
 	if strings.TrimSpace(c.Username) == "" {
@@ -177,11 +282,46 @@ func (c *MysqlConnection) SelfValidate() error {
 		return errors.New("invalid mysql databaseSchema")
 	}
 
+	if c.SupportsMetadataExtraction == nil {
+		v := true
+		c.SupportsMetadataExtraction = &v
+	}
+
+	if c.SupportsDBTExtraction == nil {
+		v := true
+		c.SupportsDBTExtraction = &v
+	}
+
+	if c.SupportsProfiler == nil {
+		v := true
+		c.SupportsProfiler = &v
+	}
+
+	if c.SupportsQueryComment == nil {
+		v := true
+		c.SupportsQueryComment = &v
+	}
+
+	if c.SupportsDataDiff == nil {
+		v := true
+		c.SupportsDataDiff = &v
+	}
+
+	if c.SupportsUsageExtraction == nil {
+		v := true
+		c.SupportsUsageExtraction = &v
+	}
+	
+	if c.SupportsLineageExtraction == nil {
+		v := true
+		c.SupportsLineageExtraction = &v
+	}
+
 	return nil
 }
 
-func ValidateMysqlConnection(conn interface{}) error {
-	bytes, err := json.Marshal(conn)
+func ValidateMysqlConnection(databaseConnection *DatabaseConnection) error {
+	bytes, err := json.Marshal(databaseConnection.Config)
 	
 	if err != nil {
 		return errors.New("failed to marshal mysql connection config")
@@ -193,7 +333,20 @@ func ValidateMysqlConnection(conn interface{}) error {
 		return errors.New("failed to unmarshal to MysqlConnection")
 	}
 
-	return c.SelfValidate()
+	validateErr := c.SelfValidate()
+
+	if validateErr != nil {
+		return validateErr
+	}
+
+	dataFromStruct, dataFromStructErr := baseUtils.StructToMap(c)
+
+	if dataFromStructErr != nil {
+		return dataFromStructErr
+	}
+
+	databaseConnection.Config = dataFromStruct
+	return nil
 }
 
 // Test connection result
@@ -244,9 +397,9 @@ func ValidateCreateDBServiceEntityPayload(payload *CreateDBServiceEntityPayload)
 	}
 
 	if idx == 0 {
-		return ValidatePostgresConnection(payload.Connection.Config)
+		return ValidatePostgresConnection(payload.Connection)
 	} else if idx == 1 {
-		return ValidateMysqlConnection(payload.Connection.Config)
+		return ValidateMysqlConnection(payload.Connection)
 	} else {
 		return errors.New("unsuported service type")
 	}
