@@ -99,6 +99,15 @@ CREATE TABLE IF NOT EXISTS pipeline_service_entity(
     deleted BOOLEAN NOT NULL,
     namehash VARCHAR(256)
 );
+CREATE TABLE IF NOT EXISTS stored_procedure_entity(
+    id VARCHAR(36) PRIMARY KEY,
+    name VARCHAR(256) UNIQUE NOT NULL,
+    json JSONB NOT NULL,
+    updatedat BIGINT NOT NULL,
+    updatedby VARCHAR(256),
+    deleted BOOLEAN NOT NULL,
+    fqnhash VARCHAR(256)
+);
 CREATE TABLE IF NOT EXISTS table_entity(
     id VARCHAR(36) PRIMARY KEY,
     name VARCHAR(256) UNIQUE NOT NULL,
@@ -165,6 +174,7 @@ DROP TABLE IF EXISTS entity_relationship;
 DROP TABLE IF EXISTS ingestion_pipeline_entity;
 DROP TABLE IF EXISTS pipeline_entity;
 DROP TABLE IF EXISTS pipeline_service_entity;
+DROP TABLE IF EXISTS stored_procedure_entity;
 DROP TABLE IF EXISTS table_entity;
 DROP TABLE IF EXISTS test_connection_definition;
 DROP TABLE IF EXISTS test_definition;

@@ -24,6 +24,7 @@ func InitDatabaseEntityHandler(e *gin.Engine, databaseEntityService *dataService
 		g.GET("/name/:fqn", h.getDatabaseEntityByFqn)
 		g.GET("", h.getAllDatabaseEntities)
 		g.POST("", h.createDatabaseEntity)
+		g.PUT("", h.createOrUpdateDatabaseEntity)
 		g.DELETE("/:id", h.deleteDatabaseEntityById)
 		g.DELETE("/name/:fqn", h.deleteDatabaseEntityByFqn)
 	}
@@ -54,7 +55,21 @@ func (h *DatabaseEntityHandler) getAllDatabaseEntities(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Get all databases successfully", "data": databaseEntities })
+	jsonValues := []*dataModels.Database{}
+	
+	for _, e := range databaseEntities {
+		jsonValues = append(jsonValues, e.Json)
+	}
+
+	// Get paging
+	total, err := h.DatabaseEntityService.GetCountDatabaseEntities()
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Get all dbservices failed", "error": err.Error() })
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{ "message": "Get all databases successfully", "data": jsonValues, "paging": total })
 }
 
 func (h *DatabaseEntityHandler) getDatabaseEntityById(ctx *gin.Context) {
@@ -73,7 +88,7 @@ func (h *DatabaseEntityHandler) getDatabaseEntityById(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Get database by id successfully", "data": databaseEntity })
+	ctx.JSON(http.StatusOK, databaseEntity.Json)
 }
 
 func (h *DatabaseEntityHandler) getDatabaseEntityByFqn(ctx *gin.Context) {
@@ -92,7 +107,7 @@ func (h *DatabaseEntityHandler) getDatabaseEntityByFqn(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Get database by fqn successfully", "data": databaseEntity })
+	ctx.JSON(http.StatusOK, databaseEntity.Json)
 }
 
 func (h *DatabaseEntityHandler) createDatabaseEntity(ctx *gin.Context) {
@@ -112,7 +127,27 @@ func (h *DatabaseEntityHandler) createDatabaseEntity(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{ "message": "Create database successfully", "data": databaseEntity })
+	ctx.JSON(http.StatusCreated, databaseEntity.Json)
+}
+
+func (h *DatabaseEntityHandler) createOrUpdateDatabaseEntity(ctx *gin.Context) {
+	// Get payload
+	payload := &dataModels.CreateDatabaseEntityPayload{}
+
+	if err := ctx.ShouldBindJSON(payload); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid payload", "error": err.Error() })
+		return
+	}
+
+	// Create or update database entity
+	databaseEntity, err := h.DatabaseEntityService.CreateOrUpdateDatabaseEntity(payload);
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Create or update database failed", "error": err.Error() })
+		return
+	}
+
+	ctx.JSON(http.StatusOK,  databaseEntity.Json)
 }
 
 func (h *DatabaseEntityHandler) deleteDatabaseEntityById(ctx *gin.Context) {

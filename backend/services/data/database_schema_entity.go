@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	baseModels "github.com/nambuitechx/go-metadata/models/base"
 	dataModels "github.com/nambuitechx/go-metadata/models/data"
 	servicesRepositories "github.com/nambuitechx/go-metadata/repositories/services"
 	dataRepositories "github.com/nambuitechx/go-metadata/repositories/data"
@@ -39,6 +40,11 @@ func (s *DatabaseSchemaEntityService) GetAllDatabaseSchemaEntities(limit int, of
 	return databaseSchemaEntity, err
 }
 
+func (s *DatabaseSchemaEntityService) GetCountDatabaseSchemaEntities() (*baseModels.EntityTotal, error) {
+	entityTotal, err := s.DatabaseSchemaEntityRepository.SelectCountDatabaseSchemaEntities()
+	return entityTotal, err
+}
+
 func (s *DatabaseSchemaEntityService) GetDatabaseSchemaEntityById(id string) (*dataModels.DatabaseSchemaEntity, error) {
 	databaseSchemaEntity, err := s.DatabaseSchemaEntityRepository.SelectDatabaseSchemaEntityById(id)
 	return databaseSchemaEntity, err
@@ -50,6 +56,67 @@ func (s *DatabaseSchemaEntityService) GetDatabaseSchemaEntityByFqn(fqn string) (
 }
 
 func (s *DatabaseSchemaEntityService) CreateDatabaseSchemaEntity(payload *dataModels.CreateDatabaseSchemaEntityPayload) (*dataModels.DatabaseSchemaEntity, error) {
+	id := uuid.NewString()
+	now := time.Now().Unix()
+
+	// Split dbservice and database
+	arr := strings.Split(payload.Database, ".")
+
+	if len(arr) != 2 {
+		return nil, errors.New("invalid database field")
+	}
+
+	// Get dbservice
+	dbservice, err := s.DBServiceEntityRepository.SelectDBServiceEntityByFqn(arr[0])
+
+	if err != nil {
+		return nil, err
+	}
+
+	dbserviceEntityRef := dbservice.Json.ToEntityReference()
+
+	// Get database
+	database, err := s.DatabaseEntityRepository.SelectDatabaseEntityByFqn(fmt.Sprintf("%v.%v", arr[0], arr[1]))
+
+	if err != nil {
+		return nil, err
+	}
+
+	databaseEntityRef := database.Json.ToEntityReference()
+
+	// Populate database schema
+	databaseSchema := &dataModels.DatabaseSchema{
+		ID: id,
+		Name: payload.Name,
+		FullyQualifiedName: fmt.Sprintf("%v.%v", payload.Database, payload.Name),
+		DisplayName: payload.DisplayName,
+		Description: payload.Description,
+		ServiceType: dbservice.ServiceType,
+		Service: dbserviceEntityRef,
+		Database: databaseEntityRef,
+		Deleted: false,
+	}
+
+	entity := &dataModels.DatabaseSchemaEntity{
+		ID: id,
+		Name: payload.Name,
+		Json: databaseSchema,
+		UpdatedAt: now,
+		Deleted: false,
+	}
+
+	databaseSchemaEntity, err := s.DatabaseSchemaEntityRepository.InsertDatabaseSchemaEntity(entity)
+	return databaseSchemaEntity, err
+}
+
+func (s *DatabaseSchemaEntityService) CreateOrUpdateDatabaseSchemaEntity(payload *dataModels.CreateDatabaseSchemaEntityPayload) (*dataModels.DatabaseSchemaEntity, error) {
+	exist, err := s.DatabaseSchemaEntityRepository.SelectDatabaseSchemaEntityByFqn(fmt.Sprintf("%v.%v", payload.Database, payload.Name))
+
+	if err == nil {
+		updated, err := s.DatabaseSchemaEntityRepository.UpdateDatabaseSchemaEntity(exist)
+		return updated, err
+	}
+
 	id := uuid.NewString()
 	now := time.Now().Unix()
 

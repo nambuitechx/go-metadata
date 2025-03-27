@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"github.com/jmoiron/sqlx"
+	baseModels "github.com/nambuitechx/go-metadata/models/base"
 	dataModels "github.com/nambuitechx/go-metadata/models/data"
 )
 
@@ -26,6 +27,13 @@ func (r *DatabaseEntityRepository) SelectDatabaseEntities(limit int, offset int)
 	}
 
 	return databaseEntities, err
+}
+
+func (r *DatabaseEntityRepository) SelectCountDatabaseEntities() (*baseModels.EntityTotal, error) {
+	entityTotal := &baseModels.EntityTotal{}
+	statement := "SELECT COUNT(id) as total FROM database_entity"
+	err := r.DB.Get(entityTotal, statement)
+	return entityTotal, err
 }
 
 func (r *DatabaseEntityRepository) SelectDatabaseEntityById(id string) (*dataModels.DatabaseEntity, error) {

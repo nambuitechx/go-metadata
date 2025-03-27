@@ -24,6 +24,7 @@ func InitDBServiceEntityHandler(e *gin.Engine, dbserviceEntityService *servicesS
 		g.GET("/name/:fqn", h.getDBServiceEntityByFqn)
 		g.GET("", h.getAllDBServiceEntities)
 		g.POST("", h.createDBServiceEntity)
+		g.PUT("", h.createOrUpdateDBServiceEntity)
 		g.PUT("/:id/testConnectionResult", h.updateTestConnectionResult)
 		g.DELETE("/:id", h.deleteDBServiceEntityById)
 		g.DELETE("/name/:fqn", h.deleteDBServiceEntityByFqn)
@@ -55,7 +56,21 @@ func (h *DBServiceEntityHandler) getAllDBServiceEntities(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Get all dbservices successfully", "data": dbserviceEntities })
+	jsonValues := []*servicesModels.DBService{}
+	
+	for _, e := range dbserviceEntities {
+		jsonValues = append(jsonValues, e.Json)
+	}
+
+	// Get paging
+	total, err := h.DBServiceEntityService.GetCountDBServiceEntities()
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Get all dbservices failed", "error": err.Error() })
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{ "message": "Get all dbservices successfully", "data": jsonValues, "paging": total })
 }
 
 func (h *DBServiceEntityHandler) getDBServiceEntityById(ctx *gin.Context) {
@@ -119,7 +134,33 @@ func (h *DBServiceEntityHandler) createDBServiceEntity(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{ "message": "Create dbservice successfully", "data": dbserviceEntity })
+	ctx.JSON(http.StatusCreated, dbserviceEntity.Json)
+}
+
+func (h *DBServiceEntityHandler) createOrUpdateDBServiceEntity(ctx *gin.Context) {
+	// Get payload
+	payload := &servicesModels.CreateDBServiceEntityPayload{}
+
+	if err := ctx.ShouldBindJSON(payload); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid payload", "error": err.Error() })
+		return
+	}
+
+	// Validate payload
+	if err := servicesModels.ValidateCreateDBServiceEntityPayload(payload); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Create dbservice failed", "error": err.Error() })
+		return
+	}
+
+	// Create or update dbservice entity
+	dbserviceEntity, err := h.DBServiceEntityService.CreateOrUpdateDBServiceEntity(payload);
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Create or update dbservice failed", "error": err.Error() })
+		return
+	}
+
+	ctx.JSON(http.StatusOK, dbserviceEntity.Json)
 }
 
 func (h *DBServiceEntityHandler) updateTestConnectionResult(ctx *gin.Context) {
@@ -154,7 +195,7 @@ func (h *DBServiceEntityHandler) updateTestConnectionResult(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, updatedDBServiceEntity.Json)
+	ctx.JSON(http.StatusOK, updatedDBServiceEntity.Json)
 }
 
 func (h *DBServiceEntityHandler) deleteDBServiceEntityById(ctx *gin.Context) {

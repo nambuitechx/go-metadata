@@ -24,6 +24,7 @@ func InitDatabaseSchemaEntityHandler(e *gin.Engine, databaseSchemaEntityService 
 		g.GET("/name/:fqn", h.getDatabaseSchemaEntityByFqn)
 		g.GET("", h.getAllDatabaseSchemaEntities)
 		g.POST("", h.createDatabaseSchemaEntity)
+		g.PUT("", h.createOrUpdateDatabaseSchemaEntity)
 		g.DELETE("/:id", h.deleteDatabaseSchemaEntityById)
 		g.DELETE("/name/:fqn", h.deleteDatabaseSchemaEntityByFqn)
 	}
@@ -54,7 +55,21 @@ func (h *DatabaseSchemaEntityHandler) getAllDatabaseSchemaEntities(ctx *gin.Cont
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Get all database schemas successfully", "data": databaseSchemaEntities })
+	jsonValues := []*dataModels.DatabaseSchema{}
+	
+	for _, e := range databaseSchemaEntities {
+		jsonValues = append(jsonValues, e.Json)
+	}
+
+	// Get paging
+	total, err := h.DatabaseSchemaEntityService.GetCountDatabaseSchemaEntities()
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Get all dbservices failed", "error": err.Error() })
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{ "message": "Get all database schemas successfully", "data": jsonValues, "paging": total })
 }
 
 func (h *DatabaseSchemaEntityHandler) getDatabaseSchemaEntityById(ctx *gin.Context) {
@@ -73,7 +88,7 @@ func (h *DatabaseSchemaEntityHandler) getDatabaseSchemaEntityById(ctx *gin.Conte
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Get database schema by id successfully", "data": databaseSchemaEntity })
+	ctx.JSON(http.StatusOK, databaseSchemaEntity.Json)
 }
 
 func (h *DatabaseSchemaEntityHandler) getDatabaseSchemaEntityByFqn(ctx *gin.Context) {
@@ -92,7 +107,7 @@ func (h *DatabaseSchemaEntityHandler) getDatabaseSchemaEntityByFqn(ctx *gin.Cont
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Get database schema by fqn successfully", "data": databaseSchemaEntity })
+	ctx.JSON(http.StatusOK, databaseSchemaEntity.Json)
 }
 
 func (h *DatabaseSchemaEntityHandler) createDatabaseSchemaEntity(ctx *gin.Context) {
@@ -112,7 +127,27 @@ func (h *DatabaseSchemaEntityHandler) createDatabaseSchemaEntity(ctx *gin.Contex
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{ "message": "Create database schema successfully", "data": databaseSchemaEntity })
+	ctx.JSON(http.StatusCreated, databaseSchemaEntity.Json)
+}
+
+func (h *DatabaseSchemaEntityHandler) createOrUpdateDatabaseSchemaEntity(ctx *gin.Context) {
+	// Get payload
+	payload := &dataModels.CreateDatabaseSchemaEntityPayload{}
+
+	if err := ctx.ShouldBindJSON(payload); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid payload", "error": err.Error() })
+		return
+	}
+
+	// Create or update database schema entity
+	databaseSchemaEntity, err := h.DatabaseSchemaEntityService.CreateOrUpdateDatabaseSchemaEntity(payload);
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Create or update database schema failed", "error": err.Error() })
+		return
+	}
+
+	ctx.JSON(http.StatusOK, databaseSchemaEntity.Json)
 }
 
 func (h *DatabaseSchemaEntityHandler) deleteDatabaseSchemaEntityById(ctx *gin.Context) {

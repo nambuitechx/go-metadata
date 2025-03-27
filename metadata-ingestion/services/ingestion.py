@@ -3,7 +3,7 @@ import traceback
 import psycopg2
 
 from fastapi import HTTPException
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 
 from metadata.generated.schema.entity.services.connections.metadata.openMetadataConnection import OpenMetadataConnection
@@ -18,6 +18,9 @@ from metadata.generated.schema.metadataIngestion.workflow import (
 )
 from metadata.generated.schema.metadataIngestion.databaseServiceMetadataPipeline import DatabaseServiceMetadataPipeline
 from metadata.generated.schema.type.filterPattern import FilterPattern
+from metadata.generated.schema.entity.automations.workflow import (
+    Workflow as AutomationWorkflow,
+)
 
 import metadata.ingestion.connections.test_connections
 from metadata.ingestion.source.connections import get_connection, get_test_connection_fn
@@ -125,25 +128,35 @@ def get_test_connection_result(id: str) -> dict:
 def _test_connection_steps(
     metadata: OpenMetadata,
     steps: List[TestConnectionStep],
-    automation_workflow: dict,
-) -> None:
+    automation_workflow: Optional[AutomationWorkflow] = None,
+) -> TestConnectionResult:
     """
     Run all the function steps and raise any errors
     """
     if automation_workflow:
-        _test_connection_steps_automation_workflow(
+        return _test_connection_steps_automation_workflow(
             metadata=metadata, steps=steps, automation_workflow=automation_workflow
         )
 
-    else:
-        _test_connection_steps_during_ingestion(steps=steps)
+    test_connection_result = _test_connection_steps_during_ingestion(steps=steps)
+    test_connection_result.lastUpdatedAt = int(datetime.now().timestamp() * 1000)
+    test_connection_result.status = (
+        StatusType.Failed.value
+        if any(
+            step
+            for step in test_connection_result.steps
+            if (not step.passed) and step.mandatory
+        )
+        else StatusType.Successful.value
+    )
+    return test_connection_result
 
 
 def _test_connection_steps_automation_workflow(
     metadata: OpenMetadata,
     steps: List[TestConnectionStep],
     automation_workflow: dict,
-) -> None:
+) -> TestConnectionResult:
     """
     Run the test connection as part of the automation workflow
     We need to update the automation workflow in each step
@@ -215,6 +228,7 @@ def _test_connection_steps_automation_workflow(
             else StatusType.Successful.value
         )
         updateConnectionTestStatus(test_connection_result)
+        return test_connection_result
 
     except Exception as err:
         logger.error(
@@ -223,6 +237,7 @@ def _test_connection_steps_automation_workflow(
         test_connection_result.lastUpdatedAt = int(datetime.now().timestamp() * 1000)
         test_connection_result.status = StatusType.Failed.value
         updateConnectionTestStatus(test_connection_result)
+        return test_connection_result
 
 
 metadata.ingestion.connections.test_connections._test_connection_steps = (
@@ -270,13 +285,19 @@ def run_metadata_ingestion_for_om(payload: IngestMetadataPayload):
     if connection == None:
         raise HTTPException(status_code=404, detail="Connection not found")
     
-    # logger.info(f"========== connection: {connection}")
-    
     source = Source(
         type=connection.serviceType.value,
         serviceName=connection_name,
         # serviceConnection={
-        #     "config": connection.connection.model_dump()
+        #     "config": {
+        #         "hostPort": "techx-kalliope-dev-openmetadatadb.coadbyfuowjn.ap-southeast-1.rds.amazonaws.com:5432",
+        #         "database": "openmetadatadb",
+        #         "username": "openmetadata_db_user",
+        #         "authType": {
+        #             "password": "ML1EsY81dBUevxuo"
+        #         },
+        #         "sslMode": "require"
+        #     }
         # },
         sourceConfig=SourceConfig(
             config=DatabaseServiceMetadataPipeline(
@@ -289,9 +310,7 @@ def run_metadata_ingestion_for_om(payload: IngestMetadataPayload):
         ),
     )
     
-    logger.info(f"========== source: {source}")
     logger.info(f"========== Running metadata ingestion for {connection_name}")
-    
     runWorkFlow(source, connection.id.root.__str__())
 
 

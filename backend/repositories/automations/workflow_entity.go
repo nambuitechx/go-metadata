@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"github.com/jmoiron/sqlx"
+	baseModels "github.com/nambuitechx/go-metadata/models/base"
 	automationsModels "github.com/nambuitechx/go-metadata/models/automations"
 )
 
@@ -26,6 +27,13 @@ func (r *WorkflowEntityRepository) SelectWorkflowEntities(limit int, offset int)
 	}
 
 	return workflowEntities, err
+}
+
+func (r *WorkflowEntityRepository) SelectCountWorkflowEntities() (*baseModels.EntityTotal, error) {
+	entityTotal := &baseModels.EntityTotal{}
+	statement := "SELECT COUNT(id) as total FROM automations_workflow"
+	err := r.DB.Get(entityTotal, statement)
+	return entityTotal, err
 }
 
 func (r *WorkflowEntityRepository) SelectWorkflowEntityById(id string) (*automationsModels.WorkflowEntity, error) {

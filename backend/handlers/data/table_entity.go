@@ -24,6 +24,7 @@ func InitTableEntityHandler(e *gin.Engine, tableEntityService *dataServices.Tabl
 		g.GET("/name/:fqn", h.getTableEntityByFqn)
 		g.GET("", h.getAllTableEntities)
 		g.POST("", h.createTableEntity)
+		g.PUT("", h.createOrUpdateTableEntity)
 		g.DELETE("/:id", h.deleteTableEntityById)
 		g.DELETE("/name/:fqn", h.deleteTableEntityByFqn)
 	}
@@ -54,7 +55,21 @@ func (h *TableEntityHandler) getAllTableEntities(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Get all table successfully", "data": tableEntities })
+	jsonValues := []*dataModels.Table{}
+	
+	for _, e := range tableEntities {
+		jsonValues = append(jsonValues, e.Json)
+	}
+
+	// Get paging
+	total, err := h.TableEntityService.GetCountTableEntities()
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Get all dbservices failed", "error": err.Error() })
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{ "message": "Get all table successfully", "data": jsonValues, "paging": total })
 }
 
 func (h *TableEntityHandler) getTableEntityById(ctx *gin.Context) {
@@ -73,7 +88,7 @@ func (h *TableEntityHandler) getTableEntityById(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Get table by id successfully", "data": tableEntity })
+	ctx.JSON(http.StatusOK, tableEntity.Json)
 }
 
 func (h *TableEntityHandler) getTableEntityByFqn(ctx *gin.Context) {
@@ -92,7 +107,7 @@ func (h *TableEntityHandler) getTableEntityByFqn(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Get table by fqn successfully", "data": tableEntity })
+	ctx.JSON(http.StatusOK, tableEntity.Json)
 }
 
 func (h *TableEntityHandler) createTableEntity(ctx *gin.Context) {
@@ -112,7 +127,27 @@ func (h *TableEntityHandler) createTableEntity(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{ "message": "Create table successfully", "data": tableEntity })
+	ctx.JSON(http.StatusCreated, tableEntity.Json)
+}
+
+func (h *TableEntityHandler) createOrUpdateTableEntity(ctx *gin.Context) {
+	// Get payload
+	payload := &dataModels.CreateTableEntityPayload{}
+
+	if err := ctx.ShouldBindJSON(payload); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid payload", "error": err.Error() })
+		return
+	}
+
+	// Create or update table entity
+	tableEntity, err := h.TableEntityService.CreateOrUpdateTableEntity(payload);
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Create or update table failed", "error": err.Error() })
+		return
+	}
+
+	ctx.JSON(http.StatusOK, tableEntity.Json)
 }
 
 func (h *TableEntityHandler) deleteTableEntityById(ctx *gin.Context) {

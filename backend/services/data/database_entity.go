@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	baseModels "github.com/nambuitechx/go-metadata/models/base"
 	dataModels "github.com/nambuitechx/go-metadata/models/data"
 	servicesRepositories "github.com/nambuitechx/go-metadata/repositories/services"
 	dataRepositories "github.com/nambuitechx/go-metadata/repositories/data"
@@ -34,6 +35,11 @@ func (s *DatabaseEntityService) GetAllDatabaseEntities(limit int, offset int) ([
 	return databaseEntity, err
 }
 
+func (s *DatabaseEntityService) GetCountDatabaseEntities() (*baseModels.EntityTotal, error) {
+	entityTotal, err := s.DatabaseEntityRepository.SelectCountDatabaseEntities()
+	return entityTotal, err
+}
+
 func (s *DatabaseEntityService) GetDatabaseEntityById(id string) (*dataModels.DatabaseEntity, error) {
 	databaseEntity, err := s.DatabaseEntityRepository.SelectDatabaseEntityById(id)
 	return databaseEntity, err
@@ -45,6 +51,50 @@ func (s *DatabaseEntityService) GetDatabaseEntityByFqn(fqn string) (*dataModels.
 }
 
 func (s *DatabaseEntityService) CreateDatabaseEntity(payload *dataModels.CreateDatabaseEntityPayload) (*dataModels.DatabaseEntity, error) {
+	id := uuid.NewString()
+	now := time.Now().Unix()
+
+	// Get dbservice
+	dbservice, err := s.DBServiceEntityRepository.SelectDBServiceEntityByFqn(payload.Service)
+
+	if err != nil {
+		return nil, err
+	}
+
+	dbserviceEntityRef := dbservice.Json.ToEntityReference()
+
+	// Populate database
+	database := &dataModels.Database{
+		ID: id,
+		Name: payload.Name,
+		FullyQualifiedName: fmt.Sprintf("%v.%v", payload.Service, payload.Name),
+		DisplayName: payload.DisplayName,
+		Description: payload.Description,
+		ServiceType: dbservice.ServiceType,
+		Service: dbserviceEntityRef,
+		Deleted: false,
+	}
+
+	entity := &dataModels.DatabaseEntity{
+		ID: id,
+		Name: payload.Name,
+		Json: database,
+		UpdatedAt: now,
+		Deleted: false,
+	}
+
+	databaseEntity, err := s.DatabaseEntityRepository.InsertDatabaseEntity(entity)
+	return databaseEntity, err
+}
+
+func (s *DatabaseEntityService) CreateOrUpdateDatabaseEntity(payload *dataModels.CreateDatabaseEntityPayload) (*dataModels.DatabaseEntity, error) {
+	exist, err := s.DatabaseEntityRepository.SelectDatabaseEntityByFqn(fmt.Sprintf("%v.%v", payload.Service, payload.Name))
+
+	if err == nil {
+		updated, err := s.DatabaseEntityRepository.UpdateDatabaseEntity(exist)
+		return updated, err
+	}
+
 	id := uuid.NewString()
 	now := time.Now().Unix()
 

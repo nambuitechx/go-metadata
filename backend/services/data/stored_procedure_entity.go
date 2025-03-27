@@ -13,52 +13,52 @@ import (
 	dataRepositories "github.com/nambuitechx/go-metadata/repositories/data"
 )
 
-type TableEntityService struct {
+type StoredProcedureEntityService struct {
 	DBServiceEntityRepository *servicesRepositories.DBServiceEntityRepository
 	DatabaseEntityRepository *dataRepositories.DatabaseEntityRepository
 	DatabaseSchemaEntityRepository *dataRepositories.DatabaseSchemaEntityRepository
-	TableEntityRepository *dataRepositories.TableEntityRepository
+	StoredProcedureEntityRepository *dataRepositories.StoredProcedureEntityRepository
 }
 
-func NewTableEntityService(
+func NewStoredProcedureEntityService(
 	dbserviceEntityRepository *servicesRepositories.DBServiceEntityRepository,
 	databaseEntityRepository *dataRepositories.DatabaseEntityRepository,
 	databaseSchemaEntityRepository *dataRepositories.DatabaseSchemaEntityRepository,
-	tableEntityRepository *dataRepositories.TableEntityRepository,
-) *TableEntityService {
-	return &TableEntityService{
+	storedProcedureEntityRepository *dataRepositories.StoredProcedureEntityRepository,
+) *StoredProcedureEntityService {
+	return &StoredProcedureEntityService{
 		DBServiceEntityRepository: dbserviceEntityRepository,
 		DatabaseEntityRepository: databaseEntityRepository,
 		DatabaseSchemaEntityRepository: databaseSchemaEntityRepository,
-		TableEntityRepository: tableEntityRepository,
+		StoredProcedureEntityRepository: storedProcedureEntityRepository,
 	}
 }
 
-func (s *TableEntityService) Health() string {
-	return "Table service is available"
+func (s *StoredProcedureEntityService) Health() string {
+	return "Stored procedure service is available"
 }
 
-func (s *TableEntityService) GetAllTableEntities(limit int, offset int) ([]dataModels.TableEntity, error) {
-	tableEntity, err := s.TableEntityRepository.SelectTableEntities(limit, offset)
-	return tableEntity, err
+func (s *StoredProcedureEntityService) GetAllStoredProcedureEntities(limit int, offset int) ([]dataModels.StoredProcedureEntity, error) {
+	storedProcedureEntity, err := s.StoredProcedureEntityRepository.SelectStoredProcedureEntities(limit, offset)
+	return storedProcedureEntity, err
 }
 
-func (s *TableEntityService) GetCountTableEntities() (*baseModels.EntityTotal, error) {
-	entityTotal, err := s.TableEntityRepository.SelectCountTableEntities()
+func (s *StoredProcedureEntityService) GetCountStoredProcedureEntities() (*baseModels.EntityTotal, error) {
+	entityTotal, err := s.StoredProcedureEntityRepository.SelectCountStoredProcedureEntities()
 	return entityTotal, err
 }
 
-func (s *TableEntityService) GetTableEntityById(id string) (*dataModels.TableEntity, error) {
-	tableEntity, err := s.TableEntityRepository.SelectTableEntityById(id)
-	return tableEntity, err
+func (s *StoredProcedureEntityService) GetStoredProcedureEntityById(id string) (*dataModels.StoredProcedureEntity, error) {
+	storedProcedureEntity, err := s.StoredProcedureEntityRepository.SelectStoredProcedureEntityById(id)
+	return storedProcedureEntity, err
 }
 
-func (s *TableEntityService) GetTableEntityByFqn(fqn string) (*dataModels.TableEntity, error) {
-	tableEntity, err := s.TableEntityRepository.SelectTableEntityByFqn(fqn)
-	return tableEntity, err
+func (s *StoredProcedureEntityService) GetStoredProcedureEntityByFqn(fqn string) (*dataModels.StoredProcedureEntity, error) {
+	storedProcedureEntity, err := s.StoredProcedureEntityRepository.SelectStoredProcedureEntityByFqn(fqn)
+	return storedProcedureEntity, err
 }
 
-func (s *TableEntityService) CreateTableEntity(payload *dataModels.CreateTableEntityPayload) (*dataModels.TableEntity, error) {
+func (s *StoredProcedureEntityService) CreateStoredProcedureEntity(payload *dataModels.CreateStoredProcedureEntityPayload) (*dataModels.StoredProcedureEntity, error) {
 	id := uuid.NewString()
 	now := time.Now().Unix()
 
@@ -96,40 +96,39 @@ func (s *TableEntityService) CreateTableEntity(payload *dataModels.CreateTableEn
 
 	databaseSchemaEntityRef := databaseSchema.Json.ToEntityReference()
 
-	// Populate table
-	table := &dataModels.Table{
+	// Populate stored procedure
+	storedProcedure := &dataModels.StoredProcedure{
 		ID: id,
 		Name: payload.Name,
 		FullyQualifiedName: fmt.Sprintf("%v.%v", payload.DatabaseSchema, payload.Name),
 		DisplayName: payload.DisplayName,
 		Description: payload.Description,
+		StoredProcedureCode: payload.StoredProcedureCode,
+		StoredProcedureType: payload.StoredProcedureType,
 		ServiceType: dbservice.ServiceType,
 		Service: dbserviceEntityRef,
 		Database: databaseEntityRef,
 		DatabaseSchema: databaseSchemaEntityRef,
-		TableType: payload.TableType,
-		TableConstraints: payload.TableConstraints,
-		Columns: payload.Columns,
 		Deleted: false,
 	}
 
-	entity := &dataModels.TableEntity{
+	entity := &dataModels.StoredProcedureEntity{
 		ID: id,
 		Name: payload.Name,
-		Json: table,
+		Json: storedProcedure,
 		UpdatedAt: now,
 		Deleted: false,
 	}
 
-	tableEntity, err := s.TableEntityRepository.InsertTableEntity(entity)
-	return tableEntity, err
+	storedProcedureEntity, err := s.StoredProcedureEntityRepository.InsertStoredProcedureEntity(entity)
+	return storedProcedureEntity, err
 }
 
-func (s *TableEntityService) CreateOrUpdateTableEntity(payload *dataModels.CreateTableEntityPayload) (*dataModels.TableEntity, error) {
-	exist, err := s.TableEntityRepository.SelectTableEntityByFqn(fmt.Sprintf("%v.%v", payload.DatabaseSchema, payload.Name))
+func (s *StoredProcedureEntityService) CreateOrUpdateStoredProcedureEntity(payload *dataModels.CreateStoredProcedureEntityPayload) (*dataModels.StoredProcedureEntity, error) {
+	exist, err := s.StoredProcedureEntityRepository.SelectStoredProcedureEntityByFqn(fmt.Sprintf("%v.%v", payload.DatabaseSchema, payload.Name))
 
 	if err == nil {
-		updated, err := s.TableEntityRepository.UpdateTableEntity(exist)
+		updated, err := s.StoredProcedureEntityRepository.UpdateStoredProcedureEntity(exist)
 		return updated, err
 	}
 
@@ -170,41 +169,40 @@ func (s *TableEntityService) CreateOrUpdateTableEntity(payload *dataModels.Creat
 
 	databaseSchemaEntityRef := databaseSchema.Json.ToEntityReference()
 
-	// Populate table
-	table := &dataModels.Table{
+	// Populate stored procedure
+	storedProcedure := &dataModels.StoredProcedure{
 		ID: id,
 		Name: payload.Name,
 		FullyQualifiedName: fmt.Sprintf("%v.%v", payload.DatabaseSchema, payload.Name),
 		DisplayName: payload.DisplayName,
 		Description: payload.Description,
+		StoredProcedureCode: payload.StoredProcedureCode,
+		StoredProcedureType: payload.StoredProcedureType,
 		ServiceType: dbservice.ServiceType,
 		Service: dbserviceEntityRef,
 		Database: databaseEntityRef,
 		DatabaseSchema: databaseSchemaEntityRef,
-		TableType: payload.TableType,
-		TableConstraints: payload.TableConstraints,
-		Columns: payload.Columns,
 		Deleted: false,
 	}
 
-	entity := &dataModels.TableEntity{
+	entity := &dataModels.StoredProcedureEntity{
 		ID: id,
 		Name: payload.Name,
-		Json: table,
+		Json: storedProcedure,
 		UpdatedAt: now,
 		Deleted: false,
 	}
 
-	tableEntity, err := s.TableEntityRepository.InsertTableEntity(entity)
-	return tableEntity, err
+	storedProcedureEntity, err := s.StoredProcedureEntityRepository.InsertStoredProcedureEntity(entity)
+	return storedProcedureEntity, err
 }
 
-func (s *TableEntityService) DeleteTableEntityById(id string) error {
-	err := s.TableEntityRepository.DeleteTableEntityById(id)
+func (s *StoredProcedureEntityService) DeleteStoredProcedureEntityById(id string) error {
+	err := s.StoredProcedureEntityRepository.DeleteStoredProcedureEntityById(id)
 	return err
 }
 
-func (s *TableEntityService) DeleteTableEntityByFqn(fqn string) error {
-	err := s.TableEntityRepository.DeleteTableEntityByFqn(fqn)
+func (s *StoredProcedureEntityService) DeleteStoredProcedureEntityByFqn(fqn string) error {
+	err := s.StoredProcedureEntityRepository.DeleteStoredProcedureEntityByFqn(fqn)
 	return err
 }

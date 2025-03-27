@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	baseModels "github.com/nambuitechx/go-metadata/models/base"
 	servicesModels "github.com/nambuitechx/go-metadata/models/services"
 	servicesRepositories "github.com/nambuitechx/go-metadata/repositories/services"
 )
@@ -28,18 +29,23 @@ func (s *TestConnectionDefinitionEntityService) Health() string {
 }
 
 func (s *TestConnectionDefinitionEntityService) GetAllTestConnectionDefinitionEntities(limit int, offset int) ([]servicesModels.TestConnectionDefinitionEntity, error) {
-	workflowEntity, err := s.TestConnectionDefinitionEntityRepository.SelectTestConnectionDefinitionEntities(limit, offset)
-	return workflowEntity, err
+	testConnectionDefinitionEntity, err := s.TestConnectionDefinitionEntityRepository.SelectTestConnectionDefinitionEntities(limit, offset)
+	return testConnectionDefinitionEntity, err
+}
+
+func (s *TestConnectionDefinitionEntityService) GetCountTestConnectionDefinitionEntities() (*baseModels.EntityTotal, error) {
+	entityTotal, err := s.TestConnectionDefinitionEntityRepository.SelectCountTestConnectionDefinitionEntities()
+	return entityTotal, err
 }
 
 func (s *TestConnectionDefinitionEntityService) GetTestConnectionDefinitionEntityById(id string) (*servicesModels.TestConnectionDefinitionEntity, error) {
-	workflowEntity, err := s.TestConnectionDefinitionEntityRepository.SelectTestConnectionDefinitionEntityById(id)
-	return workflowEntity, err
+	testConnectionDefinitionEntity, err := s.TestConnectionDefinitionEntityRepository.SelectTestConnectionDefinitionEntityById(id)
+	return testConnectionDefinitionEntity, err
 }
 
 func (s *TestConnectionDefinitionEntityService) GetTestConnectionDefinitionEntityByFqn(fqn string) (*servicesModels.TestConnectionDefinitionEntity, error) {
-	workflowEntity, err := s.TestConnectionDefinitionEntityRepository.SelectTestConnectionDefinitionEntityByFqn(fqn)
-	return workflowEntity, err
+	testConnectionDefinitionEntity, err := s.TestConnectionDefinitionEntityRepository.SelectTestConnectionDefinitionEntityByFqn(fqn)
+	return testConnectionDefinitionEntity, err
 }
 
 func (s *TestConnectionDefinitionEntityService) InitTestConnectionDefinitions() {

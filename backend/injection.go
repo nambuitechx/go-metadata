@@ -30,6 +30,7 @@ func getEngine() *gin.Engine {
 	databaseEntityRepository := dataRepositories.NewDatabaseEntityRepository(db)
 	databaseSchemaEntityRepository := dataRepositories.NewDatabaseSchemaEntityRepository(db)
 	tableEntityRepository := dataRepositories.NewTableEntityRepository(db)
+	storedProcedureEntityRepository := dataRepositories.NewStoredProcedureEntityRepository(db)
 	workflowEntityRepository := automationsRepositories.NewWorkflowEntityRepository(db)
 
 	// Services
@@ -38,6 +39,7 @@ func getEngine() *gin.Engine {
 	databaseEntityService := dataServices.NewDatabaseEntityService(dbserviceEntityRepository, databaseEntityRepository)
 	databaseSchemaEntityService := dataServices.NewDatabaseSchemaEntityService(dbserviceEntityRepository, databaseEntityRepository, databaseSchemaEntityRepository)
 	tableEntityService := dataServices.NewTableEntityService(dbserviceEntityRepository, databaseEntityRepository, databaseSchemaEntityRepository, tableEntityRepository)
+	storedProcedureEntityService := dataServices.NewStoredProcedureEntityService(dbserviceEntityRepository, databaseEntityRepository, databaseSchemaEntityRepository, storedProcedureEntityRepository)
 	workflowEntityService := automationsServices.NewWorkflowEntityService(workflowEntityRepository)
 
 	// Engine
@@ -61,6 +63,7 @@ func getEngine() *gin.Engine {
 	dataHandlers.InitDatabaseEntityHandler(engine, databaseEntityService)
 	dataHandlers.InitDatabaseSchemaEntityHandler(engine, databaseSchemaEntityService)
 	dataHandlers.InitTableEntityHandler(engine, tableEntityService)
+	dataHandlers.InitStoreProcedureEntityHandler(engine, storedProcedureEntityService)
 	automationsHandlers.InitWorkflowEntityHandler(engine, workflowEntityService)
 
 	return engine

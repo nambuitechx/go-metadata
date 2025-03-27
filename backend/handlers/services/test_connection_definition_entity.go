@@ -58,7 +58,15 @@ func (h *TestConnectionDefinitionEntityHandler) getAllTestConnectionDefinitionEn
 		jsonValues = append(jsonValues, e.Json)
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Get all test connection definition successfully", "data": jsonValues })
+	// Get paging
+	total, err := h.TestConnectionDefinitionEntityService.GetCountTestConnectionDefinitionEntities()
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Get all test connection definition failed", "error": err.Error() })
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{ "message": "Get all test connection definition successfully", "data": jsonValues, "paging": total })
 }
 
 func (h *TestConnectionDefinitionEntityHandler) getTestConnectionDefinitionEntityById(ctx *gin.Context) {

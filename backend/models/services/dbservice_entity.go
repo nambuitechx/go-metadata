@@ -351,7 +351,7 @@ func ValidateMysqlConnection(databaseConnection *DatabaseConnection) error {
 
 // Test connection result
 type TestConnectionResult struct {
-	LastUpdatedAt		string							`json:"lastUpdatedAt"`
+	LastUpdatedAt		int							`json:"lastUpdatedAt"`
 	Status				string							`json:"status"`
 	Steps				[]*TestConnectionStepResult		`json:"steps"`
 }

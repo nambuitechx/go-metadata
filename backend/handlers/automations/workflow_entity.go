@@ -26,6 +26,7 @@ func InitWorkflowEntityHandler(e *gin.Engine, workflowEntityService *automations
 		g.GET("", h.getAllWorkflowEntities)
 		g.POST("", h.createWorkflowEntity)
 		g.POST("/trigger/:id", h.triggerWorkflowById)
+		g.PUT("", h.createOrUpdateWorkflowEntity)
 		g.PATCH("/:id", h.patchWorkflowById)
 		g.PATCH("/name/:fqn", h.patchWorkflowByFqn)
 		g.DELETE("/:id", h.deleteWorkflowEntityById)
@@ -64,7 +65,15 @@ func (h *WorkflowEntityHandler) getAllWorkflowEntities(ctx *gin.Context) {
 		jsonValues = append(jsonValues, e.Json)
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{ "message": "Get all workflow successfully", "data": jsonValues })
+	// Get paging
+	total, err := h.WorkflowEntityService.GetCountTableEntities()
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Get all dbservices failed", "error": err.Error() })
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{ "message": "Get all workflow successfully", "data": jsonValues, "paging": total })
 }
 
 func (h *WorkflowEntityHandler) getWorkflowEntityById(ctx *gin.Context) {
@@ -122,7 +131,27 @@ func (h *WorkflowEntityHandler) createWorkflowEntity(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{ "message": "Create workflow successfully", "data": workflowEntity.Json })
+	ctx.JSON(http.StatusCreated, workflowEntity.Json)
+}
+
+func (h *WorkflowEntityHandler) createOrUpdateWorkflowEntity(ctx *gin.Context) {
+	// Get payload
+	payload := &automationsModels.CreateWorkflowRequest{}
+
+	if err := ctx.ShouldBindJSON(payload); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid payload", "error": err.Error() })
+		return
+	}
+
+	// Create or update workflow entity
+	workflowEntity, err := h.WorkflowEntityService.CreateOrUpdateWorkflowEntity(payload);
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Create or update workflow failed", "error": err.Error() })
+		return
+	}
+
+	ctx.JSON(http.StatusOK, workflowEntity.Json)
 }
 
 func (h *WorkflowEntityHandler) triggerWorkflowById(ctx *gin.Context) {

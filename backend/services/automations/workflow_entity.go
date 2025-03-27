@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"time"
 
-	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/google/uuid"
-	automationsModels "github.com/nambuitechx/go-metadata/models/automations"
+	jsonpatch "github.com/evanphx/json-patch"
 	baseModels "github.com/nambuitechx/go-metadata/models/base"
+	automationsModels "github.com/nambuitechx/go-metadata/models/automations"
 	automationsRepositories "github.com/nambuitechx/go-metadata/repositories/automations"
 )
 
@@ -28,6 +28,11 @@ func (s *WorkflowEntityService) GetAllWorkflowEntities(limit int, offset int) ([
 	return workflowEntity, err
 }
 
+func (s *WorkflowEntityService) GetCountTableEntities() (*baseModels.EntityTotal, error) {
+	entityTotal, err := s.WorkflowEntityRepository.SelectCountWorkflowEntities()
+	return entityTotal, err
+}
+
 func (s *WorkflowEntityService) GetWorkflowEntityById(id string) (*automationsModels.WorkflowEntity, error) {
 	workflowEntity, err := s.WorkflowEntityRepository.SelectWorkflowEntityById(id)
 	return workflowEntity, err
@@ -39,6 +44,44 @@ func (s *WorkflowEntityService) GetWorkflowEntityByFqn(fqn string) (*automations
 }
 
 func (s *WorkflowEntityService) CreateWorkflowEntity(payload *automationsModels.CreateWorkflowRequest) (*automationsModels.WorkflowEntity, error) {
+	id := uuid.NewString()
+	now := time.Now().Unix()
+
+	workflow := &automationsModels.Workflow{
+		ID: id,
+		Name: payload.Name,
+		FullyQualifiedName: payload.Name,
+		DisplayName: payload.DisplayName,
+		Description: payload.Description,
+		WorkflowType: payload.WorkflowType,
+		Status: payload.Status,
+		Request: payload.Request,
+		Response: payload.Response,
+		Deleted: false,
+	}
+
+	entity := &automationsModels.WorkflowEntity{
+		ID: id,
+		Name: payload.Name,
+		WorkflowType: payload.WorkflowType,
+		Status: payload.Status,
+		Json: workflow,
+		UpdatedAt: now,
+		Deleted: false,
+	}
+
+	workflowEntity, err := s.WorkflowEntityRepository.InsertWorkflowEntity(entity)
+	return workflowEntity, err
+}
+
+func (s *WorkflowEntityService) CreateOrUpdateWorkflowEntity(payload *automationsModels.CreateWorkflowRequest) (*automationsModels.WorkflowEntity, error) {
+	exist, err := s.WorkflowEntityRepository.SelectWorkflowEntityByFqn(payload.Name)
+
+	if err == nil {
+		updated, err := s.WorkflowEntityRepository.UpdateWorkflowEntity(exist)
+		return updated, err
+	}
+
 	id := uuid.NewString()
 	now := time.Now().Unix()
 
