@@ -35,13 +35,13 @@ func (s *DatabaseSchemaEntityService) Health() string {
 	return "Database schema service is available"
 }
 
-func (s *DatabaseSchemaEntityService) GetAllDatabaseSchemaEntities(limit int, offset int) ([]dataModels.DatabaseSchemaEntity, error) {
-	databaseSchemaEntity, err := s.DatabaseSchemaEntityRepository.SelectDatabaseSchemaEntities(limit, offset)
+func (s *DatabaseSchemaEntityService) GetAllDatabaseSchemaEntities(database string, limit int, offset int) ([]dataModels.DatabaseSchemaEntity, error) {
+	databaseSchemaEntity, err := s.DatabaseSchemaEntityRepository.SelectDatabaseSchemaEntities(database, limit, offset)
 	return databaseSchemaEntity, err
 }
 
-func (s *DatabaseSchemaEntityService) GetCountDatabaseSchemaEntities() (*baseModels.EntityTotal, error) {
-	entityTotal, err := s.DatabaseSchemaEntityRepository.SelectCountDatabaseSchemaEntities()
+func (s *DatabaseSchemaEntityService) GetCountDatabaseSchemaEntities(database string) (*baseModels.EntityTotal, error) {
+	entityTotal, err := s.DatabaseSchemaEntityRepository.SelectCountDatabaseSchemaEntities(database)
 	return entityTotal, err
 }
 

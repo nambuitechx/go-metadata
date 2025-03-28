@@ -38,13 +38,13 @@ func (s *TableEntityService) Health() string {
 	return "Table service is available"
 }
 
-func (s *TableEntityService) GetAllTableEntities(limit int, offset int) ([]dataModels.TableEntity, error) {
-	tableEntity, err := s.TableEntityRepository.SelectTableEntities(limit, offset)
+func (s *TableEntityService) GetAllTableEntities(databaseSchema string, limit int, offset int) ([]dataModels.TableEntity, error) {
+	tableEntity, err := s.TableEntityRepository.SelectTableEntities(databaseSchema, limit, offset)
 	return tableEntity, err
 }
 
-func (s *TableEntityService) GetCountTableEntities() (*baseModels.EntityTotal, error) {
-	entityTotal, err := s.TableEntityRepository.SelectCountTableEntities()
+func (s *TableEntityService) GetCountTableEntities(databaseSchema string) (*baseModels.EntityTotal, error) {
+	entityTotal, err := s.TableEntityRepository.SelectCountTableEntities(databaseSchema)
 	return entityTotal, err
 }
 

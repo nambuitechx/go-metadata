@@ -48,7 +48,7 @@ func (h *DatabaseEntityHandler) getAllDatabaseEntities(ctx *gin.Context) {
 	}
 
 	// Get database entites
-	databaseEntities, err := h.DatabaseEntityService.GetAllDatabaseEntities(query.Limit, query.Offset)
+	databaseEntities, err := h.DatabaseEntityService.GetAllDatabaseEntities(query.Service, query.Limit, query.Offset)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Get all databases failed", "error": err.Error() })
@@ -62,7 +62,7 @@ func (h *DatabaseEntityHandler) getAllDatabaseEntities(ctx *gin.Context) {
 	}
 
 	// Get paging
-	total, err := h.DatabaseEntityService.GetCountDatabaseEntities()
+	total, err := h.DatabaseEntityService.GetCountDatabaseEntities(query.Service)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Get all dbservices failed", "error": err.Error() })

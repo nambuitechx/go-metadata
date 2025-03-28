@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS change_event(
 );
 CREATE TABLE IF NOT EXISTS database_entity(
     id VARCHAR(36) PRIMARY KEY,
-    name VARCHAR(256) UNIQUE NOT NULL,
+    name VARCHAR(256) NOT NULL,
     json JSONB NOT NULL,
     updatedat BIGINT NOT NULL,
     updatedby VARCHAR(256),
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS database_entity(
 );
 CREATE TABLE IF NOT EXISTS database_schema_entity(
     id VARCHAR(36) PRIMARY KEY,
-    name VARCHAR(256) UNIQUE NOT NULL,
+    name VARCHAR(256) NOT NULL,
     json JSONB NOT NULL,
     updatedat BIGINT NOT NULL,
     updatedby VARCHAR(256),
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS entity_relationship(
 );
 CREATE TABLE IF NOT EXISTS ingestion_pipeline_entity(
     id VARCHAR(36) PRIMARY KEY,
-    name VARCHAR(256) UNIQUE NOT NULL,
+    name VARCHAR(256) NOT NULL,
     json JSONB NOT NULL,
     updatedat BIGINT NOT NULL,
     updatedby VARCHAR(256),
@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS ingestion_pipeline_entity(
 );
 CREATE TABLE IF NOT EXISTS pipeline_entity(
     id VARCHAR(36) PRIMARY KEY,
-    name VARCHAR(256) UNIQUE NOT NULL,
+    name VARCHAR(256) NOT NULL,
     json JSONB NOT NULL,
     updatedat BIGINT NOT NULL,
     updatedby VARCHAR(256),
@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS pipeline_service_entity(
 );
 CREATE TABLE IF NOT EXISTS stored_procedure_entity(
     id VARCHAR(36) PRIMARY KEY,
-    name VARCHAR(256) UNIQUE NOT NULL,
+    name VARCHAR(256) NOT NULL,
     json JSONB NOT NULL,
     updatedat BIGINT NOT NULL,
     updatedby VARCHAR(256),
@@ -110,7 +110,7 @@ CREATE TABLE IF NOT EXISTS stored_procedure_entity(
 );
 CREATE TABLE IF NOT EXISTS table_entity(
     id VARCHAR(36) PRIMARY KEY,
-    name VARCHAR(256) UNIQUE NOT NULL,
+    name VARCHAR(256) NOT NULL,
     json JSONB NOT NULL,
     updatedat BIGINT NOT NULL,
     updatedby VARCHAR(256),

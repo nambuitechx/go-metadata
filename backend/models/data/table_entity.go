@@ -4,8 +4,10 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	typeModels "github.com/nambuitechx/go-metadata/models/type"
+	// baseUtils "github.com/nambuitechx/go-metadata/utils"
 )
 
 // Table entity
@@ -84,25 +86,76 @@ var TableType = map[string]int {
 	"Transient": 10,
 }
 
+func ValidateTableType(tableType string) (int, error) {
+	idx, ok := TableType[tableType]
+
+	if !ok {
+		return -1, errors.New("invalid table type")
+	}
+
+	return idx, nil
+}
+
 // Column
 type Column struct {
-	Name				string		`json:"name"`
-	FullyQualifiedName	string		`json:"fullyQualifiedName"`
+	Name				*string		`json:"name"`
+	FullyQualifiedName	*string		`json:"fullyQualifiedName"`
 
 	DisplayName			string		`json:"displayName"`
 	Description			string		`json:"description"`
 
-	DataType			string		`json:"dataType"`
-	ArrayDataType		string		`json:"arrayDataType"`
+	DataType			*string		`json:"dataType"`
+	ArrayDataType		*string		`json:"arrayDataType"`
 	DataLength			int32		`json:"dataLength"`
 	DataTypeDisplay		string		`json:"dataTypeDisplay"`
 
 	Precision			int32		`json:"precision"`
 	Scale				int32		`json:"scale"`
 
-	Constraint			string		`json:"constraint"`
-	OrdinalPosition		int32		`json:"ordinalPosition"`
-	JsonSchema			string		`json:"jsonSchema"`
+	Constraint			*string		`json:"constraint"`
+	OrdinalPosition		*int32		`json:"ordinalPosition"`
+	JsonSchema			*string		`json:"jsonSchema"`
+}
+
+func ValidateColumn(column *Column, tableFqn string) error {
+	if column.Name == nil {
+		return errors.New("invalid column name")
+	} else if *column.Name == "" {
+		return errors.New("column name cannot be empty")
+	}
+
+	if column.FullyQualifiedName == nil {
+		v := fmt.Sprintf("%v.%v", tableFqn, column.Name)
+		column.FullyQualifiedName = &v
+	} else if *column.FullyQualifiedName == "" {
+		return errors.New("column fqn cannot be empty")
+	}
+
+	if column.DataType != nil {
+		_, ok := DataType[*column.DataType]
+
+		if !ok {
+			return errors.New("invalid column data type")
+		}
+	}
+
+	if column.ArrayDataType != nil {
+		_, ok := DataType[*column.ArrayDataType]
+
+		if !ok {
+			return errors.New("invalid column data array type")
+		}
+	}
+
+	if column.Constraint != nil {
+		_, ok := Constraint[*column.Constraint]
+
+		if !ok {
+			return errors.New("invalid column constraint")
+		}
+	}
+
+	return  nil
 }
 
 // Data type
@@ -199,10 +252,10 @@ var Constraint = map[string]int {
 
 // Table constraint
 type TableConstraint struct {
-	ConstraintType		string		`json:"constraintType"`
+	ConstraintType		*string		`json:"constraintType"`
 	Columns				[]string	`json:"columns"`
 	ReferredColumns		[]string	`json:"referredColumns"`
-	RelationshipType	string		`json:"relationshipType"`
+	RelationshipType	*string		`json:"relationshipType"`
 }
 
 // Constraint type
@@ -224,8 +277,9 @@ var RelationshipType = map[string]int {
 
 // APIs
 type GetTableEntitiesQuery struct {
-	Limit int	`form:"limit"`
-	Offset int	`form:"offset"`
+	DatabaseSchema		string	`form:"databaseSchema"`
+	Limit 				int		`form:"limit"`
+	Offset 				int		`form:"offset"`
 }
 
 type GetTableEntityByIdParam struct {
@@ -243,8 +297,28 @@ type CreateTableEntityPayload struct {
 
 	DatabaseSchema		string				`json:"databaseSchema" binding:"required"`
 
-	TableType			string				`json:"tableType"`
+	TableType			string				`json:"tableType" binding:"required"`
 	TableConstraints	[]TableConstraint	`json:"tableConstraints"`
 
 	Columns				[]Column			`json:"columns"`
+}
+
+func ValidateCreateTableEntityPayload(payload *CreateTableEntityPayload) error {
+	_, tableTypeErr := ValidateTableType(payload.TableType)
+
+	if tableTypeErr != nil {
+		return tableTypeErr
+	}
+
+	tableFqn := fmt.Sprintf("%v.%v", payload.DatabaseSchema, payload.Name)
+
+	for _, column := range payload.Columns {
+		err := ValidateColumn(&column, tableFqn)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

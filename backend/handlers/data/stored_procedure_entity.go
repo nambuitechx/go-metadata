@@ -48,7 +48,7 @@ func (h *StoredProcedureEntityHandler) getAllStoredProcedureEntities(ctx *gin.Co
 	}
 
 	// Get stored procedure entites
-	tableEntities, err := h.StoredProcedureEntityService.GetAllStoredProcedureEntities(query.Limit, query.Offset)
+	tableEntities, err := h.StoredProcedureEntityService.GetAllStoredProcedureEntities(query.DatabaseSchema, query.Limit, query.Offset)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Get all stored procedure failed", "error": err.Error() })
@@ -62,7 +62,7 @@ func (h *StoredProcedureEntityHandler) getAllStoredProcedureEntities(ctx *gin.Co
 	}
 
 	// Get paging
-	total, err := h.StoredProcedureEntityService.GetCountStoredProcedureEntities()
+	total, err := h.StoredProcedureEntityService.GetCountStoredProcedureEntities(query.DatabaseSchema)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Get all stored procedure failed", "error": err.Error() })

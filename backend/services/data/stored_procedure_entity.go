@@ -38,13 +38,13 @@ func (s *StoredProcedureEntityService) Health() string {
 	return "Stored procedure service is available"
 }
 
-func (s *StoredProcedureEntityService) GetAllStoredProcedureEntities(limit int, offset int) ([]dataModels.StoredProcedureEntity, error) {
-	storedProcedureEntity, err := s.StoredProcedureEntityRepository.SelectStoredProcedureEntities(limit, offset)
+func (s *StoredProcedureEntityService) GetAllStoredProcedureEntities(databaseSchema string, limit int, offset int) ([]dataModels.StoredProcedureEntity, error) {
+	storedProcedureEntity, err := s.StoredProcedureEntityRepository.SelectStoredProcedureEntities(databaseSchema, limit, offset)
 	return storedProcedureEntity, err
 }
 
-func (s *StoredProcedureEntityService) GetCountStoredProcedureEntities() (*baseModels.EntityTotal, error) {
-	entityTotal, err := s.StoredProcedureEntityRepository.SelectCountStoredProcedureEntities()
+func (s *StoredProcedureEntityService) GetCountStoredProcedureEntities(databaseSchema string) (*baseModels.EntityTotal, error) {
+	entityTotal, err := s.StoredProcedureEntityRepository.SelectCountStoredProcedureEntities(databaseSchema)
 	return entityTotal, err
 }
 

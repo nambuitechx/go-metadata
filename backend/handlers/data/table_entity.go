@@ -48,7 +48,7 @@ func (h *TableEntityHandler) getAllTableEntities(ctx *gin.Context) {
 	}
 
 	// Get table entites
-	tableEntities, err := h.TableEntityService.GetAllTableEntities(query.Limit, query.Offset)
+	tableEntities, err := h.TableEntityService.GetAllTableEntities(query.DatabaseSchema, query.Limit, query.Offset)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Get all table failed", "error": err.Error() })
@@ -62,7 +62,7 @@ func (h *TableEntityHandler) getAllTableEntities(ctx *gin.Context) {
 	}
 
 	// Get paging
-	total, err := h.TableEntityService.GetCountTableEntities()
+	total, err := h.TableEntityService.GetCountTableEntities(query.DatabaseSchema)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Get all dbservices failed", "error": err.Error() })
@@ -119,6 +119,12 @@ func (h *TableEntityHandler) createTableEntity(ctx *gin.Context) {
 		return
 	}
 
+	// Validate payload
+	if err := dataModels.ValidateCreateTableEntityPayload(payload); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Create table failed", "error": err.Error() })
+		return
+	}
+
 	// Create table entity
 	tableEntity, err := h.TableEntityService.CreateTableEntity(payload);
 
@@ -136,6 +142,12 @@ func (h *TableEntityHandler) createOrUpdateTableEntity(ctx *gin.Context) {
 
 	if err := ctx.ShouldBindJSON(payload); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Invalid payload", "error": err.Error() })
+		return
+	}
+
+	// Validate payload
+	if err := dataModels.ValidateCreateTableEntityPayload(payload); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Create table failed", "error": err.Error() })
 		return
 	}
 

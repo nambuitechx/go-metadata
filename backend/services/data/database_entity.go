@@ -30,13 +30,13 @@ func (s *DatabaseEntityService) Health() string {
 	return "Database service is available"
 }
 
-func (s *DatabaseEntityService) GetAllDatabaseEntities(limit int, offset int) ([]dataModels.DatabaseEntity, error) {
-	databaseEntity, err := s.DatabaseEntityRepository.SelectDatabaseEntities(limit, offset)
+func (s *DatabaseEntityService) GetAllDatabaseEntities(service string, limit int, offset int) ([]dataModels.DatabaseEntity, error) {
+	databaseEntity, err := s.DatabaseEntityRepository.SelectDatabaseEntities(service, limit, offset)
 	return databaseEntity, err
 }
 
-func (s *DatabaseEntityService) GetCountDatabaseEntities() (*baseModels.EntityTotal, error) {
-	entityTotal, err := s.DatabaseEntityRepository.SelectCountDatabaseEntities()
+func (s *DatabaseEntityService) GetCountDatabaseEntities(service string) (*baseModels.EntityTotal, error) {
+	entityTotal, err := s.DatabaseEntityRepository.SelectCountDatabaseEntities(service)
 	return entityTotal, err
 }
 

@@ -14,25 +14,25 @@ func NewTableEntityRepository(db *sqlx.DB) *TableEntityRepository {
 	return &TableEntityRepository{ DB: db }
 }
 
-func (r *TableEntityRepository) SelectTableEntities(limit int, offset int) ([]dataModels.TableEntity, error) {
+func (r *TableEntityRepository) SelectTableEntities(databaseSchema string, limit int, offset int) ([]dataModels.TableEntity, error) {
 	tableEntities := []dataModels.TableEntity{}
 	var err error
 	
 	if limit < 0 {
-		statement := "SELECT * FROM table_entity"
-		err = r.DB.Select(&tableEntities, statement)
+		statement := "SELECT * FROM table_entity WHERE json->>'fullyQualifiedName' LIKE ($1 || '.%')"
+		err = r.DB.Select(&tableEntities, statement, databaseSchema)
 	} else {
-		statement := "SELECT * FROM table_entity LIMIT $1 OFFSET $2"
-		err = r.DB.Select(&tableEntities, statement, limit, offset)
+		statement := "SELECT * FROM table_entity WHERE json->>'fullyQualifiedName' LIKE ($1 || '.%') LIMIT $2 OFFSET $3"
+		err = r.DB.Select(&tableEntities, statement, databaseSchema, limit, offset)
 	}
 
 	return tableEntities, err
 }
 
-func (r *TableEntityRepository) SelectCountTableEntities() (*baseModels.EntityTotal, error) {
+func (r *TableEntityRepository) SelectCountTableEntities(databaseSchema string) (*baseModels.EntityTotal, error) {
 	entityTotal := &baseModels.EntityTotal{}
-	statement := "SELECT COUNT(id) as total FROM table_entity"
-	err := r.DB.Get(entityTotal, statement)
+	statement := "SELECT COUNT(id) as total FROM table_entity WHERE json->>'fullyQualifiedName' LIKE ($1 || '.%')"
+	err := r.DB.Get(entityTotal, statement, databaseSchema)
 	return entityTotal, err
 }
 

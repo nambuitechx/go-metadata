@@ -48,7 +48,7 @@ func (h *DatabaseSchemaEntityHandler) getAllDatabaseSchemaEntities(ctx *gin.Cont
 	}
 
 	// Get database schema entites
-	databaseSchemaEntities, err := h.DatabaseSchemaEntityService.GetAllDatabaseSchemaEntities(query.Limit, query.Offset)
+	databaseSchemaEntities, err := h.DatabaseSchemaEntityService.GetAllDatabaseSchemaEntities(query.Database, query.Limit, query.Offset)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Get all database schemas failed", "error": err.Error() })
@@ -62,7 +62,7 @@ func (h *DatabaseSchemaEntityHandler) getAllDatabaseSchemaEntities(ctx *gin.Cont
 	}
 
 	// Get paging
-	total, err := h.DatabaseSchemaEntityService.GetCountDatabaseSchemaEntities()
+	total, err := h.DatabaseSchemaEntityService.GetCountDatabaseSchemaEntities(query.Database)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{ "message": "Get all dbservices failed", "error": err.Error() })

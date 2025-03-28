@@ -14,25 +14,25 @@ func NewStoredProcedureEntityRepository(db *sqlx.DB) *StoredProcedureEntityRepos
 	return &StoredProcedureEntityRepository{ DB: db }
 }
 
-func (r *StoredProcedureEntityRepository) SelectStoredProcedureEntities(limit int, offset int) ([]dataModels.StoredProcedureEntity, error) {
+func (r *StoredProcedureEntityRepository) SelectStoredProcedureEntities(databaseSchema string, limit int, offset int) ([]dataModels.StoredProcedureEntity, error) {
 	storedProcedureEntities := []dataModels.StoredProcedureEntity{}
 	var err error
 	
 	if limit < 0 {
-		statement := "SELECT * FROM stored_procedure_entity"
-		err = r.DB.Select(&storedProcedureEntities, statement)
+		statement := "SELECT * FROM stored_procedure_entity WHERE json->>'fullyQualifiedName' LIKE ($1 || '.%')"
+		err = r.DB.Select(&storedProcedureEntities, statement, databaseSchema)
 	} else {
-		statement := "SELECT * FROM stored_procedure_entity LIMIT $1 OFFSET $2"
-		err = r.DB.Select(&storedProcedureEntities, statement, limit, offset)
+		statement := "SELECT * FROM stored_procedure_entity WHERE json->>'fullyQualifiedName' LIKE ($1 || '.%') LIMIT $2 OFFSET $3"
+		err = r.DB.Select(&storedProcedureEntities, statement, databaseSchema, limit, offset)
 	}
 
 	return storedProcedureEntities, err
 }
 
-func (r *StoredProcedureEntityRepository) SelectCountStoredProcedureEntities() (*baseModels.EntityTotal, error) {
+func (r *StoredProcedureEntityRepository) SelectCountStoredProcedureEntities(databaseSchema string) (*baseModels.EntityTotal, error) {
 	entityTotal := &baseModels.EntityTotal{}
-	statement := "SELECT COUNT(id) as total FROM stored_procedure_entity"
-	err := r.DB.Get(entityTotal, statement)
+	statement := "SELECT COUNT(id) as total FROM stored_procedure_entity WHERE json->>'fullyQualifiedName' LIKE ($1 || '.%')"
+	err := r.DB.Get(entityTotal, statement, databaseSchema)
 	return entityTotal, err
 }
 

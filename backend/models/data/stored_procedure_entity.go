@@ -60,8 +60,9 @@ type StoredProcedureCode struct {
 
 // APIs
 type GetStoredProcedureEntitiesQuery struct {
-	Limit int	`form:"limit"`
-	Offset int	`form:"offset"`
+	DatabaseSchema		string	`form:"databaseSchema"`
+	Limit 				int		`form:"limit"`
+	Offset 				int		`form:"offset"`
 }
 
 type GetStoredProcedureEntityByIdParam struct {

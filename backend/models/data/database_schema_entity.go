@@ -65,8 +65,9 @@ func (s *DatabaseSchema) ToEntityReference() *typeModels.EntityReference {
 
 // APIs
 type GetDatabaseSchemaEntitiesQuery struct {
-	Limit int	`form:"limit"`
-	Offset int	`form:"offset"`
+	Database		string	`form:"database"`
+	Limit 			int		`form:"limit"`
+	Offset 			int		`form:"offset"`
 }
 
 type GetDatabaseSchemaEntityByIdParam struct {
